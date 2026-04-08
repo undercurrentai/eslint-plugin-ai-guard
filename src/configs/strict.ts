@@ -3,6 +3,9 @@ import type { TSESLint } from '@typescript-eslint/utils';
 const strict: TSESLint.ClassicConfig.Config = {
   plugins: ['ai-guard'],
   rules: {
+    // Strict preset: enforce every ai-guard rule at error for mature teams
+    // that want maximum coverage and are ready to tune exceptions locally.
+
     // Error Handling - all at error
     'ai-guard/no-empty-catch': 'error',
     'ai-guard/no-broad-exception': 'error',
