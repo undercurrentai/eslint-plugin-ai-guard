@@ -1,0 +1,121 @@
+import { RuleTester } from '@typescript-eslint/rule-tester';
+import { noHardcodedSecret } from '../../src/rules/security/no-hardcoded-secret';
+import { describe, it, afterAll } from 'vitest';
+
+RuleTester.afterAll = afterAll;
+RuleTester.describe = describe;
+RuleTester.it = it;
+
+const ruleTester = new RuleTester({
+  languageOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
+});
+
+ruleTester.run('no-hardcoded-secret', noHardcodedSecret, {
+  valid: [
+    // 1. Using environment variable
+    {
+      code: `const apiKey = process.env.API_KEY;`,
+    },
+    // 2. Short values (placeholders)
+    {
+      code: `const apiKey = 'test';`,
+    },
+    // 3. Variable name doesn't match secret pattern
+    {
+      code: `const username = 'admin_user_12345';`,
+    },
+    // 4. Empty string
+    {
+      code: `const password = '';`,
+    },
+    // 5. Known placeholder
+    {
+      code: `const apiKey = 'your-api-key';`,
+    },
+    // 6. Non-secret variable with long value
+    {
+      code: `const description = 'This is a really long description for a feature';`,
+    },
+    // 7. Secret name but value from env
+    {
+      code: `const jwtSecret = process.env.JWT_SECRET;`,
+    },
+    // 8. Config object with env var values
+    {
+      code: `
+        const config = {
+          secret: process.env.APP_SECRET,
+        };
+      `,
+    },
+    // 9. Short placeholder value for password
+    {
+      code: `const password = 'changeme';`,
+    },
+    // 10. Non-matching variable name
+    {
+      code: `const databaseUrl = 'mongodb://localhost:27017/mydb';`,
+    },
+  ],
+  invalid: [
+    // 1. Hardcoded API key
+    {
+      code: `const apiKey = 'sk-1234567890abcdef1234567890abcdef';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 2. Hardcoded password
+    {
+      code: `const password = 'SuperSecretPassword123!';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 3. Hardcoded JWT secret
+    {
+      code: `const jwtSecret = 'my-super-secret-jwt-key-that-is-long';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 4. Hardcoded auth token
+    {
+      code: `const authToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 5. Object property with hardcoded secret
+    {
+      code: `
+        const config = {
+          clientSecret: 'abcdef1234567890abcdef1234567890',
+        };
+      `,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 6. Assignment to member with secret value
+    {
+      code: `
+        config.apiKey = 'hardcoded-api-key-value-long';
+      `,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 7. Template literal as secret value
+    {
+      code: 'const secret = `this-is-a-hardcoded-secret-value`;',
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 8. Private key
+    {
+      code: `const privateKey = 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASC';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 9. Encryption key
+    {
+      code: `const encryptionKey = 'aes-256-cbc-key-value-here-12345';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 10. Access token
+    {
+      code: `const accessToken = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+  ],
+});
