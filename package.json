@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-ai-guard",
-  "version": "1.1.5",
+  "version": "1.0.1",
   "description": "ESLint plugin to catch AI-specific code patterns: missing error handling, async misuse, auth gaps, and hallucinations",
   "keywords": [
     "eslint",
@@ -22,16 +22,12 @@
       "require": "./dist/index.cjs"
     }
   },
-  "bin": {
-    "ai-guard": "dist/cli/index.js"
-  },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "cli:dev": "tsup --watch --config tsup.config.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
@@ -45,10 +41,9 @@
     "eslint": ">=8.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.5.2",
+    "@typescript-eslint/utils": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@typescript-eslint/rule-tester": "^8.0.0",
-    "@typescript-eslint/utils": "^8.0.0",
     "eslint": "^9.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
@@ -56,11 +51,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.4.1",
-    "@typescript-eslint/utils": "^8.0.0",
-    "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "ora": "^9.3.0"
+    "@typescript-eslint/utils": "^8.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
