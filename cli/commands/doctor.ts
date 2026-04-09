@@ -162,15 +162,19 @@ export function registerDoctorCommand(program: Command): void {
 
       // ── Check 6: No conflicting configs ───────────────────────────────────
 
-      if (env.hasConflictingConfigs) {
-        checks.push({
-          label: 'No conflicting config files',
-          pass: false,
-          detail: `Both flat config AND legacy config files found:\n${env.allConfigPaths.map((p) => `       ${path.relative(cwd, p)}`).join('\n')}`,
-          fix: 'Remove the .eslintrc.* file — ESLint v9 uses only eslint.config.*',
-          note: 'ESLint v9 silently ignores .eslintrc.* when a flat config exists. This can cause confusion.',
-        });
-      }
+      checks.push({
+        label: 'No conflicting config files',
+        pass: !env.hasConflictingConfigs,
+        detail: env.hasConflictingConfigs
+          ? `Conflicting config detected:\n${env.allConfigPaths.map((p) => `       ${path.relative(cwd, p)}`).join('\n')}`
+          : 'Only one config format detected',
+        fix: env.hasConflictingConfigs
+          ? 'Remove or backup legacy config'
+          : undefined,
+        note: env.hasConflictingConfigs
+          ? 'ESLint v9 silently ignores .eslintrc.* when a flat config exists. This can cause confusion.'
+          : undefined,
+      });
 
       // ── Check 7: No nuke-ignore pattern ───────────────────────────────────
 

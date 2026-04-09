@@ -144,15 +144,15 @@ export function registerInitCommand(program: Command): void {
         log.info('No ESLint config found — will generate one');
       }
 
-      // Warn about conflicting configs
-      if (env.hasConflictingConfigs) {
+      // Warn about conflicting configs (only if not ESLint v9, as v9 auto-resolves)
+      const eslintNeedsFlat = requiresFlatConfig(env.eslintMajor);
+      if (env.hasConflictingConfigs && !eslintNeedsFlat) {
         log.blank();
         log.warn('Conflicting configs detected:');
         for (const p of env.allConfigPaths) {
           log.print(`    ${chalk.yellow('→')} ${chalk.white(path.relative(cwd, p))}`);
         }
-        log.print(`  ${chalk.gray('ESLint v9 will use the flat config and ignore .eslintrc.* files.')}`);
-        log.print(`  ${chalk.gray('Consider removing the legacy config to avoid confusion.')}`);
+        log.print(`  ${chalk.gray('Multiple config formats found — this can cause unpredictable behavior.')}`);
       }
 
       log.blank();
@@ -181,7 +181,26 @@ export function registerInitCommand(program: Command): void {
         return;
       }
 
-      // ─── Step 3: Determine config format ────────────────────────────────────
+      // ─── Step 3: Runtime Safety ─────────────────────────────────────────────
+
+      try {
+        const { createRequire } = await import('module');
+        const { pathToFileURL } = await import('url');
+        const req = createRequire(path.join(cwd, '_probe.js'));
+        const resolvedPath = req.resolve('eslint-plugin-ai-guard');
+        const aiGuard = await import(pathToFileURL(resolvedPath).href);
+        const plugin = aiGuard.default || aiGuard;
+
+        if (!plugin.default || !plugin[preset] || !plugin[preset].rules) {
+          log.error('Invalid plugin export structure. Try reinstalling eslint-plugin-ai-guard.');
+          process.exit(1);
+          return;
+        }
+      } catch (e) {
+        // If resolution fails entirely, skip the check; validation step will catch load errors
+      }
+
+      // ─── Step 4: Determine config format ────────────────────────────────────
       //   Priority:
       //   1. --flat flag forces flat config
       //   2. ESLint v9+ → MUST use flat config
@@ -189,24 +208,21 @@ export function registerInitCommand(program: Command): void {
       //   4. No version info → default to flat (safer)
 
       const forceFlat = opts.flat === true;
-      const eslintNeedsFlat = requiresFlatConfig(env.eslintMajor);
       const existingIsFlat = isFlat(env.configType);
       const existingIsLegacy = isLegacy(env.configType);
       const useFlat = forceFlat || eslintNeedsFlat || existingIsFlat || env.configType === 'none';
 
-      // Guard: ESLint v9 + existing legacy config → migrate, don't re-create legacy
-      if (eslintNeedsFlat && existingIsLegacy) {
-        log.section('Config Migration Required');
-        log.warn(`ESLint v${env.eslintMajor} requires flat config, but a legacy config was found:`);
-        log.print(`    ${chalk.white(path.relative(cwd, env.configPath!))}`);
-        log.blank();
-        log.print(`  ${chalk.bold('ai-guard will create a new flat config alongside it.')}`);
-        log.print(`  The legacy file will remain; ESLint v9 will automatically`);
-        log.print(`  ignore it in favour of the flat config.`);
-        log.blank();
-      }
+        // Guard: ESLint v9 + existing legacy config → migrate, don't re-create legacy
+        if (eslintNeedsFlat && existingIsLegacy) {
+          log.section('Config Migration Required');
+          log.warn(`ESLint v${env.eslintMajor} requires flat config, but a legacy config was found:`);
+          log.print(`    ${chalk.white(path.relative(cwd, env.configPath!))}`);
+          log.blank();
+          log.print(`  ${chalk.bold('ai-guard will create a new flat config.')}`);
+          log.blank();
+        }
 
-      // ─── Step 4: Apply config change ────────────────────────────────────────
+        // ─── Step 5: Apply config change ────────────────────────────────────────
 
       log.section(`Configuring ESLint${isDryRun ? ' (dry run)' : ''}`);
 
@@ -294,6 +310,30 @@ export function registerInitCommand(program: Command): void {
         }
       }
 
+      // ── Auto cleanup legacy config (conflict resolution) ───────────────
+      if (eslintNeedsFlat) {
+        // Find legacy configs that might cause conflicts
+        const legacyConfigs = env.allConfigPaths.filter(p => !p.includes('eslint.config.'));
+        
+        let cleanedUp = false;
+        for (const p of legacyConfigs) {
+          if (fs.existsSync(p)) {
+            if (!isDryRun) {
+               try {
+                 fs.renameSync(p, `${p}.bak`);
+                 cleanedUp = true;
+               } catch (err) {}
+            } else {
+               cleanedUp = true;
+               log.print(`  ${chalk.gray(`[dry-run] would rename ${path.relative(cwd, p)} to ${path.basename(p)}.bak`)}`);
+            }
+          }
+        }
+        if (cleanedUp && !isDryRun) {
+          log.success('Legacy config backed up to avoid ESLint conflict');
+        }
+      }
+
       if (isDryRun) {
         log.blank();
         log.print(`  ${chalk.yellow('Dry run complete — no files written.')}`);
@@ -356,6 +396,10 @@ export function registerInitCommand(program: Command): void {
           log.blank();
           log.print(`  ${chalk.bold('Problem:')}`);
           log.print(`    ${chalk.red(loadError.message)}`);
+          if (loadError.kind === 'unknown') {
+            log.blank();
+            log.print(`    ${chalk.yellow('Generated config may be using incorrect plugin structure.')}`);
+          }
           log.blank();
           log.print(`  ${chalk.bold('Fix:')}`);
           log.print(`    1. Check the syntax in ${chalk.cyan(path.relative(cwd, finalConfigPath))}`);
@@ -378,7 +422,17 @@ export function registerInitCommand(program: Command): void {
 
       log.section('Setup Complete');
       log.blank();
-      log.print(`  ${chalk.green('✔')}  ${chalk.bold.green('Configuration validated successfully')}`);
+
+      let cleanedUpInfo = false;
+      if (eslintNeedsFlat) {
+         const legacyConfigs = env.allConfigPaths.filter(p => !p.includes('eslint.config.'));
+         cleanedUpInfo = legacyConfigs.some(p => fs.existsSync(`${p}.bak`) && !fs.existsSync(p));
+      }
+
+      const lingeringConflicts = env.hasConflictingConfigs && !eslintNeedsFlat && !cleanedUpInfo;
+      if (loadError === null && !lingeringConflicts) {
+        log.print(`  ${chalk.green('✔')}  ${chalk.bold.green('Configuration validated successfully')}`);
+      }
       log.print(`  ${chalk.green('✔')}  ${chalk.bold('ESLint config:')} ${chalk.cyan(path.relative(cwd, finalConfigPath))}`);
       log.print(`  ${chalk.green('✔')}  ${chalk.bold('Mode:')} ${chalk.cyan(useFlat ? `Flat config (ESLint v${env.eslintMajor ?? 9})` : `Legacy config (ESLint v${env.eslintMajor ?? 8})`)}`);
       log.print(`  ${chalk.green('✔')}  ${chalk.bold('Preset:')} ${chalk.cyan(preset)}`);

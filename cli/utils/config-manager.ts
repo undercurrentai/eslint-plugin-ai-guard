@@ -45,8 +45,12 @@ export default [
 
   // ai-guard: catch AI-generated code patterns
   {
-    plugins: { 'ai-guard': aiGuard },
-    rules: aiGuard.configs.${preset}.rules,
+    plugins: {
+      'ai-guard': aiGuard.default,
+    },
+    rules: {
+      ...aiGuard.${preset}.rules,
+    },
   },
 ];
 `;
@@ -85,8 +89,12 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
   const rulesBlock = `
   // ai-guard injected by ai-guard CLI
   {
-    plugins: { 'ai-guard': aiGuard },
-    rules: aiGuard.configs.${preset}.rules,
+    plugins: {
+      'ai-guard': aiGuard.default,
+    },
+    rules: {
+      ...aiGuard.${preset}.rules,
+    },
   },
 `;
 
