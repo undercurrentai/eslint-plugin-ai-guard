@@ -68,4 +68,10 @@ export const log = {
   print(msg: string): void {
     console.log(msg);
   },
+
+  debug(msg: string): void {
+    if (process.env.AI_GUARD_DEBUG === '1') {
+      console.log(`  ${chalk.gray('·')}  ${chalk.gray(msg)}`);
+    }
+  },
 };

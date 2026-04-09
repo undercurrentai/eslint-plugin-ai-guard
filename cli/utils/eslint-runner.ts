@@ -1,4 +1,5 @@
 import path from 'path';
+import { log } from './logger.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,26 @@ const DEFAULT_IGNORE_PATTERNS = [
   '**/out/**',
   '**/.git/**',
 ];
+
+// Some ESLint pattern scans should be skipped (not treated as fatal), e.g.:
+// - pattern has no matching files
+// - matched files are ignored by config/ignore rules
+export function isSkippablePatternError(error: Error): boolean {
+  const msg = error.message.toLowerCase();
+
+  const hasNoFilesSignal =
+    msg.includes('no files') ||
+    msg.includes('no files matching');
+
+  const hasIgnoredSignal =
+    msg.includes('ignored') ||
+    msg.includes('all files matched by') ||
+    msg.includes('are ignored') ||
+    msg.includes('was ignored') ||
+    msg.includes('file ignored');
+
+  return hasNoFilesSignal || hasIgnoredSignal;
+}
 
 // ─── Core runner ──────────────────────────────────────────────────────────────
 
@@ -238,12 +259,15 @@ export async function runEslint(options: RunOptions): Promise<RunResult> {
       const r = await eslint.lintFiles([pattern]);
       allRawResults.push(...r);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '';
-      // Skip "no files found" errors — not every project has every extension
-      if (msg.includes('No files matching') || msg.includes('no files')) {
+      const error = err instanceof Error ? err : new Error(String(err));
+
+      if (isSkippablePatternError(error)) {
+        log.debug(`Skipping pattern '${pattern}' (no lintable files)`);
         continue;
       }
-      throw new Error(`ESLint encountered an error: ${msg}`);
+
+      // Real ESLint runtime/config/parser errors should fail fast.
+      throw error;
     }
   }
 
