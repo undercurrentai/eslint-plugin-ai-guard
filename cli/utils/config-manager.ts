@@ -78,8 +78,36 @@ export function generateLegacyConfig(preset: Preset): string {
 
 const AI_GUARD_MARKER = 'eslint-plugin-ai-guard';
 
+export function isInvalidAiGuardConfig(content: string): boolean {
+  if (!content.includes('eslint-plugin-ai-guard') && !content.includes('ai-guard')) {
+    return false;
+  }
+  if (content.includes('.configs.')) return true;
+  if (/(['"]ai-guard['"]\s*:\s*aiGuard)(?!\.default)/.test(content)) return true;
+  return false;
+}
+
+export function repairInvalidFlatConfig(content: string): string {
+  let repaired = content;
+  
+  // 1. Fix the plugin assignment: 'ai-guard': aiGuard -> 'ai-guard': aiGuard.default
+  repaired = repaired.replace(/(['"]ai-guard['"]\s*:\s*aiGuard)(?!\.default)/g, '$1.default');
+  
+  // 2. Fix raw assignment: rules: aiGuard.configs.PRESET.rules -> rules: { ...aiGuard.PRESET.rules }
+  repaired = repaired.replace(/rules\s*:\s*aiGuard\.configs\.([a-zA-Z0-9_]+)\.rules(,?)/g, 'rules: {\n      ...aiGuard.$1.rules,\n    }$2');
+  
+  // 3. Fix spread assignment: ...aiGuard.configs.PRESET.rules -> ...aiGuard.PRESET.rules
+  repaired = repaired.replace(/\.\.\.aiGuard\.configs\.([a-zA-Z0-9_]+)\.rules/g, '...aiGuard.$1.rules');
+  
+  return repaired;
+}
+
 export function patchFlatConfig(existing: string, preset: Preset): string {
-  // If already configured — leave untouched
+  if (isInvalidAiGuardConfig(existing)) {
+    return repairInvalidFlatConfig(existing);
+  }
+
+  // If already configured and valid — leave untouched
   if (existing.includes(AI_GUARD_MARKER)) {
     return existing;
   }

@@ -272,10 +272,12 @@ export function registerInitCommand(program: Command): void {
         }
       } else if (useFlat && existingIsFlat) {
         // ── Patch existing flat config ─────────────────────────────────────────
+        const { isInvalidAiGuardConfig } = await import('../utils/config-manager.js');
         const existing = readConfig(env.configPath!);
+        const isInvalid = isInvalidAiGuardConfig(existing);
         const patched = patchFlatConfig(existing, preset);
 
-        if (patched === existing) {
+        if (patched === existing && !isInvalid) {
           log.warn('ai-guard is already present in your config — no changes made');
           finalConfigPath = env.configPath!;
         } else if (isDryRun) {
@@ -285,7 +287,11 @@ export function registerInitCommand(program: Command): void {
           const bak = backupConfig(env.configPath!);
           log.info(`Backed up → ${chalk.gray(path.relative(cwd, bak))}`);
           writeConfig(env.configPath!, patched);
-          log.success(`Patched ${chalk.white(path.relative(cwd, env.configPath!))}`);
+          if (isInvalid) {
+            log.success(`Detected invalid ai-guard config — repairing ${chalk.white(path.relative(cwd, env.configPath!))}`);
+          } else {
+            log.success(`Patched ${chalk.white(path.relative(cwd, env.configPath!))}`);
+          }
           finalConfigPath = env.configPath!;
           configWritten = true;
         }

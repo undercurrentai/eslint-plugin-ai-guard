@@ -136,27 +136,32 @@ export function registerDoctorCommand(program: Command): void {
 
       if (hasConfig && env.configPath) {
         let pluginWired = false;
+        let isInvalidConfig = false;
         let readError: string | null = null;
         try {
+          const { isInvalidAiGuardConfig } = await import('../utils/config-manager.js');
           const content = readConfig(env.configPath);
           pluginWired =
             content.includes('ai-guard') ||
             content.includes('eslint-plugin-ai-guard');
+          isInvalidConfig = isInvalidAiGuardConfig(content);
         } catch (err) {
           readError = err instanceof Error ? err.message : String(err);
         }
 
         checks.push({
           label: 'Plugin wired in config',
-          pass: pluginWired,
+          pass: pluginWired && !isInvalidConfig,
           detail: readError
             ? `Could not read config: ${readError}`
+            : isInvalidConfig
+            ? 'Invalid ai-guard config detected (wrong export usage)'
             : pluginWired
             ? 'eslint-plugin-ai-guard referenced in config'
             : `Config exists but ai-guard plugin not found in ${path.relative(cwd, env.configPath)}`,
-          fix: pluginWired
-            ? undefined
-            : 'ai-guard init  (will patch your existing config)',
+          fix: isInvalidConfig || (!pluginWired && !readError)
+            ? 'ai-guard init  (will patch/repair your existing config)'
+            : undefined,
         });
       }
 
