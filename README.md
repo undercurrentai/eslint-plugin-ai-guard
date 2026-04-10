@@ -21,29 +21,15 @@ AI-generated code has **1.7× more issues** and **2.74× more security vulnerabi
 npm install --save-dev eslint-plugin-ai-guard
 ```
 
-## Quick Start
+## 🚀 Quick Start – CLI (no config needed)
 
-### ESLint 9 (Flat Config) — `eslint.config.js`
-
-```javascript
-import aiGuard from "eslint-plugin-ai-guard";
-
-export default [
-  {
-    plugins: { "ai-guard": aiGuard },
-    rules: { ...aiGuard.configs.recommended.rules }
-  }
-];
-```
-
-### ESLint 8 (Legacy Config) — `.eslintrc.json`
-
-```json
-{
-  "plugins": ["ai-guard"],
-  "extends": ["plugin:ai-guard/recommended"]
-}
-```
+```bash
+npx ai-guard run          # recommended preset (lowest noise)
+npx ai-guard run --strict
+npx ai-guard run --security
+npx ai-guard init         # auto-creates ESLint config for you
+npx ai-guard doctor       # diagnoses setup issues
+npx ai-guard baseline     # track only *new* issues going forward
 
 That's it. **Zero configuration required.**
 
