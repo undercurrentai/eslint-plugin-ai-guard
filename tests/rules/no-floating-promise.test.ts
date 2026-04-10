@@ -87,6 +87,49 @@ ruleTester.run('no-floating-promise', noFloatingPromise, {
     {
       code: `sendEvent('started');`,
     },
+    // 15. Synchronous helper declared later (common in component modules)
+    {
+      code: `
+        sendEvent('clicked');
+        function sendEvent(name) {
+          console.log(name);
+        }
+      `,
+    },
+    // 16. React-style state setter call (sync) should not be flagged
+    {
+      code: `
+        setFormData({ name: 'A' });
+      `,
+    },
+    // 17. Local async helper with internal try/catch called fire-and-forget
+    {
+      code: `
+        async function loadData() {
+          try {
+            await fetch('/api');
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        loadData();
+      `,
+    },
+    // 18. Async arrow helper with internal try/catch called fire-and-forget
+    {
+      code: `
+        const hydrate = async () => {
+          try {
+            await fetch('/api/hydrate');
+          } catch (e) {
+            console.error(e);
+          }
+        };
+
+        hydrate();
+      `,
+    },
   ],
   invalid: [
     // 1. Bare fetch() call as statement
@@ -128,6 +171,26 @@ ruleTester.run('no-floating-promise', noFloatingPromise, {
     // 7. New Promise without handling
     {
       code: `new Promise((resolve) => resolve(1));`,
+      errors: [{ messageId: 'floatingPromise' }],
+    },
+    // 8. Async function declared later should still be detected
+    {
+      code: `
+        loadData();
+        async function loadData() {
+          await fetch('/api');
+        }
+      `,
+      errors: [{ messageId: 'floatingPromise' }],
+    },
+    // 9. Async arrow assigned to variable and called bare
+    {
+      code: `
+        const fetchDentistSlots = async () => {
+          await fetch('/api/slots');
+        };
+        fetchDentistSlots();
+      `,
       errors: [{ messageId: 'floatingPromise' }],
     },
   ],

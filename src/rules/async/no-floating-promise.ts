@@ -35,17 +35,172 @@ interface ParserServicesLike {
   };
 }
 
+interface VariableLike {
+  name: string;
+  defs?: Array<{ node?: TSESTree.Node }>;
+}
+
+interface ScopeLike {
+  upper: ScopeLike | null;
+  set?: Map<string, VariableLike>;
+  variables?: VariableLike[];
+}
+
+interface AsyncBindingInfo {
+  isAsync: boolean;
+  hasInternalErrorHandling: boolean;
+}
+
+function isAstNode(value: unknown): value is TSESTree.Node {
+  return typeof value === 'object' && value !== null && 'type' in value;
+}
+
+function nodeHasCatchClause(node: TSESTree.Node): boolean {
+  if (node.type === AST_NODE_TYPES.TryStatement && !!node.handler) {
+    return true;
+  }
+
+  for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
+    if (key === 'parent') continue;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (isAstNode(item) && nodeHasCatchClause(item)) {
+          return true;
+        }
+      }
+      continue;
+    }
+
+    if (isAstNode(value) && nodeHasCatchClause(value)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Check if a CallExpression's callee is known async via local declarations.
  */
+function isAsyncFunctionLike(node: TSESTree.Node | undefined): boolean {
+  if (!node) return false;
+  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
+    return node.async;
+  }
+  if (
+    node.type === AST_NODE_TYPES.FunctionExpression ||
+    node.type === AST_NODE_TYPES.ArrowFunctionExpression
+  ) {
+    return node.async;
+  }
+  if (
+    node.type === AST_NODE_TYPES.VariableDeclarator &&
+    node.init &&
+    (node.init.type === AST_NODE_TYPES.FunctionExpression ||
+      node.init.type === AST_NODE_TYPES.ArrowFunctionExpression)
+  ) {
+    return node.init.async;
+  }
+  return false;
+}
+
+function getAsyncBindingInfo(node: TSESTree.Node | undefined): AsyncBindingInfo {
+  if (!node) {
+    return { isAsync: false, hasInternalErrorHandling: false };
+  }
+
+  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
+    return {
+      isAsync: node.async,
+      hasInternalErrorHandling: node.body ? nodeHasCatchClause(node.body) : false,
+    };
+  }
+
+  if (
+    node.type === AST_NODE_TYPES.FunctionExpression ||
+    node.type === AST_NODE_TYPES.ArrowFunctionExpression
+  ) {
+    return {
+      isAsync: node.async,
+      hasInternalErrorHandling:
+        node.body.type === AST_NODE_TYPES.BlockStatement
+          ? nodeHasCatchClause(node.body)
+          : false,
+    };
+  }
+
+  if (
+    node.type === AST_NODE_TYPES.VariableDeclarator &&
+    node.init &&
+    (node.init.type === AST_NODE_TYPES.FunctionExpression ||
+      node.init.type === AST_NODE_TYPES.ArrowFunctionExpression)
+  ) {
+    return {
+      isAsync: node.init.async,
+      hasInternalErrorHandling:
+        node.init.body.type === AST_NODE_TYPES.BlockStatement
+          ? nodeHasCatchClause(node.init.body)
+          : false,
+    };
+  }
+
+  return { isAsync: false, hasInternalErrorHandling: false };
+}
+
+function findVariableInScope(scope: ScopeLike, name: string): VariableLike | null {
+  const fromMap = scope.set?.get(name);
+  if (fromMap) {
+    return fromMap;
+  }
+
+  if (scope.variables) {
+    const fromArray = scope.variables.find((v) => v.name === name);
+    if (fromArray) {
+      return fromArray;
+    }
+  }
+
+  return null;
+}
+
+function isIdentifierBoundToAsyncFunction(
+  identifier: TSESTree.Identifier,
+  context: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]>,
+): AsyncBindingInfo {
+  let scope = context.sourceCode.getScope(identifier) as unknown as ScopeLike | null;
+
+  while (scope) {
+    const variable = findVariableInScope(scope, identifier.name);
+    if (variable) {
+      const defs = variable.defs ?? [];
+      for (const def of defs) {
+        const info = getAsyncBindingInfo(def.node);
+        if (info.isAsync) {
+          return info;
+        }
+      }
+
+      if (defs.length === 0 && isAsyncFunctionLike(variable as unknown as TSESTree.Node)) {
+        return getAsyncBindingInfo(variable as unknown as TSESTree.Node);
+      }
+
+      return { isAsync: false, hasInternalErrorHandling: false };
+    }
+    scope = scope.upper;
+  }
+
+  return { isAsync: false, hasInternalErrorHandling: false };
+}
+
 function isLocallyAsyncCallee(
   node: TSESTree.CallExpression,
-  asyncFunctionNames: Set<string>
-): boolean {
-  // If the callee is an identifier and we've seen it declared as async
+  context: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]>,
+): AsyncBindingInfo {
   if (node.callee.type === AST_NODE_TYPES.Identifier) {
-    if (asyncFunctionNames.has(node.callee.name)) {
-      return true;
+    const info = isIdentifierBoundToAsyncFunction(node.callee, context);
+    if (info.isAsync) {
+      return info;
     }
   }
 
@@ -54,10 +209,16 @@ function isLocallyAsyncCallee(
       node.callee.type === AST_NODE_TYPES.ArrowFunctionExpression) &&
     node.callee.async
   ) {
-    return true;
+    return {
+      isAsync: true,
+      hasInternalErrorHandling:
+        node.callee.body.type === AST_NODE_TYPES.BlockStatement
+          ? nodeHasCatchClause(node.callee.body)
+          : false,
+    };
   }
 
-  return false;
+  return { isAsync: false, hasInternalErrorHandling: false };
 }
 
 function isKnownPromiseFactoryCall(node: TSESTree.CallExpression): boolean {
@@ -171,30 +332,7 @@ export const noFloatingPromise = createRule({
   },
   defaultOptions: [],
   create(context) {
-    // Track function names declared with `async` keyword in the current file
-    const asyncFunctionNames = new Set<string>();
-
     return {
-      // Track async function declarations
-      FunctionDeclaration(node) {
-        if (node.async && node.id) {
-          asyncFunctionNames.add(node.id.name);
-        }
-      },
-
-      // Track async arrow functions assigned to variables
-      VariableDeclarator(node) {
-        if (
-          node.init &&
-          (node.init.type === AST_NODE_TYPES.ArrowFunctionExpression ||
-            node.init.type === AST_NODE_TYPES.FunctionExpression) &&
-          node.init.async &&
-          node.id.type === AST_NODE_TYPES.Identifier
-        ) {
-          asyncFunctionNames.add(node.id.name);
-        }
-      },
-
       // Check ExpressionStatements — standalone call expressions
       ExpressionStatement(node) {
         if (
@@ -220,9 +358,16 @@ export const noFloatingPromise = createRule({
         }
 
         const callExpr = node.expression;
+        const localAsyncInfo = isLocallyAsyncCallee(callExpr, context);
+
+        // If a local async helper already contains its own try/catch,
+        // calling it fire-and-forget is often intentional in UI effects.
+        if (localAsyncInfo.isAsync && localAsyncInfo.hasInternalErrorHandling) {
+          return;
+        }
 
         if (
-          isLocallyAsyncCallee(callExpr, asyncFunctionNames) ||
+          localAsyncInfo.isAsync ||
           isKnownPromiseFactoryCall(callExpr) ||
           isPromiseLikeByTypeInfo(callExpr, context)
         ) {

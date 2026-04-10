@@ -41,6 +41,8 @@ const DEFAULT_AUTH_MIDDLEWARE_NAMES = new Set([
  */
 const PUBLIC_ROUTE_PATTERNS = [
   /^\/?$/,                           // '/' root
+  /^\*$/,                            // '*' SPA fallback
+  /^\/\*$/,                         // '/*' SPA fallback
   /^\/health/,                       // health checks
   /^\/ping/,                         // ping
   /^\/status/,                       // status

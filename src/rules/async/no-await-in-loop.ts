@@ -29,6 +29,15 @@ const SEQUENTIAL_CALL_HINTS = [
   'consume',
 ];
 
+const LOOP_CONTROL_HINTS = [
+  'sleep',
+  'delay',
+  'wait',
+  'throttle',
+  'ratelimit',
+  'backoff',
+];
+
 const INTENT_COMMENT_HINTS = [
   'sequential',
   'ordered',
@@ -77,6 +86,49 @@ function isLikelySequentialAwaitCall(node: TSESTree.AwaitExpression): boolean {
   return SEQUENTIAL_CALL_HINTS.some((hint) => lower.includes(hint));
 }
 
+function loopContainsControlAwait(loopNode: LoopNode): boolean {
+  let found = false;
+
+  const visit = (node: TSESTree.Node): void => {
+    if (found) return;
+
+    if (
+      node.type === AST_NODE_TYPES.AwaitExpression &&
+      node.argument.type === AST_NODE_TYPES.CallExpression
+    ) {
+      const calleeName = getCalleeName(node.argument.callee);
+      if (calleeName) {
+        const lower = calleeName.toLowerCase();
+        if (LOOP_CONTROL_HINTS.some((hint) => lower.includes(hint))) {
+          found = true;
+          return;
+        }
+      }
+    }
+
+    for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
+      if (key === 'parent') continue;
+
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item === 'object' && 'type' in item) {
+            visit(item as TSESTree.Node);
+            if (found) return;
+          }
+        }
+        continue;
+      }
+
+      if (value && typeof value === 'object' && 'type' in value) {
+        visit(value as TSESTree.Node);
+      }
+    }
+  };
+
+  visit(loopNode);
+  return found;
+}
+
 function hasIntentionalSequentialComment(
   loopNode: LoopNode,
   sourceCode: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]['sourceCode']>,
@@ -114,6 +166,10 @@ function shouldAllowIntentionalSequentialAwait(
   }
 
   if (hasIntentionalSequentialComment(loopNode, context.sourceCode)) {
+    return true;
+  }
+
+  if (loopContainsControlAwait(loopNode)) {
     return true;
   }
 

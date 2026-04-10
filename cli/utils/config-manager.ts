@@ -46,10 +46,10 @@ export default [
   // ai-guard: catch AI-generated code patterns
   {
     plugins: {
-      'ai-guard': aiGuard.default,
+      'ai-guard': aiGuard,
     },
     rules: {
-      ...aiGuard.${preset}.rules,
+      ...aiGuard.configs.${preset}.rules,
     },
   },
 ];
@@ -82,22 +82,31 @@ export function isInvalidAiGuardConfig(content: string): boolean {
   if (!content.includes('eslint-plugin-ai-guard') && !content.includes('ai-guard')) {
     return false;
   }
-  if (content.includes('.configs.')) return true;
-  if (/(['"]ai-guard['"]\s*:\s*aiGuard)(?!\.default)/.test(content)) return true;
+
+  // Old invalid shape: plugin assigned to aiGuard.default
+  if (/['"]ai-guard['"]\s*:\s*aiGuard\.default/.test(content)) return true;
+
+  // Old invalid shape: rules sourced directly from aiGuard.recommended/strict/security
+  if (/\.\.\.aiGuard\.(recommended|strict|security)\.rules/.test(content)) return true;
+  if (/rules\s*:\s*aiGuard\.(recommended|strict|security)\.rules/.test(content)) return true;
+
   return false;
 }
 
 export function repairInvalidFlatConfig(content: string): string {
   let repaired = content;
   
-  // 1. Fix the plugin assignment: 'ai-guard': aiGuard -> 'ai-guard': aiGuard.default
-  repaired = repaired.replace(/(['"]ai-guard['"]\s*:\s*aiGuard)(?!\.default)/g, '$1.default');
+  // 1. Fix plugin assignment: 'ai-guard': aiGuard.default -> 'ai-guard': aiGuard
+  repaired = repaired.replace(/(['"]ai-guard['"]\s*:\s*)aiGuard\.default/g, '$1aiGuard');
   
-  // 2. Fix raw assignment: rules: aiGuard.configs.PRESET.rules -> rules: { ...aiGuard.PRESET.rules }
-  repaired = repaired.replace(/rules\s*:\s*aiGuard\.configs\.([a-zA-Z0-9_]+)\.rules(,?)/g, 'rules: {\n      ...aiGuard.$1.rules,\n    }$2');
+  // 2. Fix raw assignment: rules: aiGuard.PRESET.rules -> rules: { ...aiGuard.configs.PRESET.rules }
+  repaired = repaired.replace(
+    /rules\s*:\s*aiGuard\.([a-zA-Z0-9_]+)\.rules(,?)/g,
+    'rules: {\n      ...aiGuard.configs.$1.rules,\n    }$2',
+  );
   
-  // 3. Fix spread assignment: ...aiGuard.configs.PRESET.rules -> ...aiGuard.PRESET.rules
-  repaired = repaired.replace(/\.\.\.aiGuard\.configs\.([a-zA-Z0-9_]+)\.rules/g, '...aiGuard.$1.rules');
+  // 3. Fix spread assignment: ...aiGuard.PRESET.rules -> ...aiGuard.configs.PRESET.rules
+  repaired = repaired.replace(/\.\.\.aiGuard\.([a-zA-Z0-9_]+)\.rules/g, '...aiGuard.configs.$1.rules');
   
   return repaired;
 }
@@ -118,10 +127,10 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
   // ai-guard injected by ai-guard CLI
   {
     plugins: {
-      'ai-guard': aiGuard.default,
+      'ai-guard': aiGuard,
     },
     rules: {
-      ...aiGuard.${preset}.rules,
+      ...aiGuard.configs.${preset}.rules,
     },
   },
 `;

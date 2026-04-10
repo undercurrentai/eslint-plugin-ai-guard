@@ -228,6 +228,13 @@ export async function runEslint(options: RunOptions): Promise<RunResult> {
     {
       files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
       plugins: { 'ai-guard': plugin } as Record<string, unknown>,
+      languageOptions: {
+        parserOptions: {
+          ecmaVersion: 'latest',
+          sourceType: 'module',
+          ecmaFeatures: { jsx: true },
+        },
+      },
       rules: rules as Record<string, unknown>,
     },
     // Ignore generated directories

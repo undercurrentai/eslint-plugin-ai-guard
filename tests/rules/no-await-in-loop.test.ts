@@ -130,6 +130,30 @@ ruleTester.run('no-await-in-loop', noAwaitInLoop, {
         }
       `,
     },
+    // 12. Ordered migration workflow explicitly documented
+    {
+      code: `
+        async function migrate(steps) {
+          for (const step of steps) {
+            // order matters: each step depends on previous output
+            await runStep(step);
+          }
+        }
+      `,
+    },
+    // 13. Loop with explicit delay control should be treated as intentional sequential flow
+    {
+      code: `
+        async function importRows(rows) {
+          const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          for (const row of rows) {
+            await fetch(row.url);
+            await delay(50);
+          }
+        }
+      `,
+    },
   ],
   invalid: [
     // 1. await inside for...of loop
@@ -229,6 +253,17 @@ ruleTester.run('no-await-in-loop', noAwaitInLoop, {
             } catch (e) {
               console.error(e);
             }
+          }
+        }
+      `,
+      errors: [{ messageId: 'awaitInLoop' }],
+    },
+    // 9. AI-style sequential page fetch loop without intent comment
+    {
+      code: `
+        async function loadPages(pages) {
+          for (const page of pages) {
+            await fetch(page.url);
           }
         }
       `,

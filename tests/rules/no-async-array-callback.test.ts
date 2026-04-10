@@ -77,6 +77,13 @@ ruleTester.run('no-async-array-callback', noAsyncArrayCallback, {
         await Promise.allSettled(tasks);
       `,
     },
+    // 15. async map consumed by Promise.race
+    {
+      code: `
+        const requests = urls.map(async (url) => fetch(url));
+        await Promise.race(requests);
+      `,
+    },
   ],
   invalid: [
     // 1. async arrow in map
@@ -144,6 +151,15 @@ ruleTester.run('no-async-array-callback', noAsyncArrayCallback, {
       code: `
         const tasks = arr.map(async (item) => transform(item));
         console.log(tasks.length);
+      `,
+      errors: [{ messageId: 'asyncArrayCallback', data: { method: 'map' } }],
+    },
+    // 14. async map result directly returned without Promise combinator
+    {
+      code: `
+        function buildCards(items) {
+          return items.map(async (item) => renderCard(item));
+        }
       `,
       errors: [{ messageId: 'asyncArrayCallback', data: { method: 'map' } }],
     },

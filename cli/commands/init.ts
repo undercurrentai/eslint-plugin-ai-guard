@@ -195,12 +195,18 @@ export function registerInitCommand(program: Command): void {
         const req = createRequire(path.join(cwd, '_probe.js'));
         const resolvedPath = req.resolve('eslint-plugin-ai-guard');
         const aiGuard = await import(pathToFileURL(resolvedPath).href);
-        const plugin = aiGuard.default || aiGuard;
+        const plugin = (aiGuard.default || aiGuard) as {
+          configs?: Record<string, { rules?: unknown }>;
+        };
 
-        if (!plugin.default || !plugin[preset] || !plugin[preset].rules) {
-          log.error('Invalid plugin export structure. Try reinstalling eslint-plugin-ai-guard.');
-          process.exit(1);
-          return;
+        const hasPresetRules =
+          !!plugin.configs &&
+          !!plugin.configs[preset] &&
+          !!plugin.configs[preset].rules;
+
+        if (!hasPresetRules) {
+          // Keep this as informational only; Step 6 performs definitive runtime validation.
+          log.debug('Plugin precheck could not verify configs shape; continuing to validation step.');
         }
       } catch (e) {
         // If resolution fails entirely, skip the check; validation step will catch load errors

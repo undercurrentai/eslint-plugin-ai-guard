@@ -63,6 +63,14 @@ ruleTester.run('require-auth-middleware', requireAuthMiddleware, {
         router.put('/update', requireAuth, updateHandler);
       `,
     },
+    // 11. SPA fallback wildcard route should be considered public
+    {
+      code: `app.get('*', serveFrontend);`,
+    },
+    // 12. Wildcard slash fallback route should be considered public
+    {
+      code: `app.get('/*', serveFrontend);`,
+    },
   ],
   invalid: [
     // 1. Basic route with no middleware at all
