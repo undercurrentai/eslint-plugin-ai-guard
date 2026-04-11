@@ -169,6 +169,13 @@ async function loadPluginModuleFromCwd(cwd: string): Promise<unknown> {
     return await import(pathToFileURL(localDistEntry).href);
   }
 
+  const localSrcEntry = path.join(cwd, 'src', 'index.ts');
+  if (fs.existsSync(localSrcEntry)) {
+    try {
+      return await import(pathToFileURL(localSrcEntry).href);
+    } catch {}
+  }
+
   throw new Error(
     'eslint-plugin-ai-guard is not installed. Run: npm install --save-dev eslint-plugin-ai-guard',
   );
