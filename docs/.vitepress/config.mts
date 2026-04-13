@@ -26,6 +26,7 @@ export default defineConfig({
           { text: 'Overview', link: '/cli/overview' },
           { text: 'run', link: '/cli/run' },
           { text: 'init', link: '/cli/init' },
+          { text: 'init-context', link: '/cli/init-context' },
           { text: 'doctor', link: '/cli/doctor' },
           { text: 'preset', link: '/cli/preset' },
           { text: 'ignore', link: '/cli/ignore' },

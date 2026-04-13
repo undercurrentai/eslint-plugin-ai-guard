@@ -25,6 +25,7 @@ ai-guard run
 |---|---|---|
 | [`run`](run.md) | Scan your project | First thing, any time |
 | [`init`](init.md) | Auto-configure ESLint | Before editor integration |
+| [`init-context`](init-context.md) | Generate AI agent rules | To configure Claude/Cursor/Copilot |
 | [`doctor`](doctor.md) | Diagnose setup issues | When something isn't working |
 | [`preset`](preset.md) | Interactive preset selector | To change rule severity levels |
 | [`ignore`](ignore.md) | Add default ignores to config | To suppress dist/build noise |
@@ -65,6 +66,9 @@ npx ai-guard run --json --max-warnings 0
 # Set up ESLint config automatically
 npx ai-guard init
 
+# Generate rules for Claude Code, Cursor, and Copilot
+npx ai-guard init-context --all
+
 # Debug setup issues
 npx ai-guard doctor
 
@@ -88,6 +92,7 @@ npx ai-guard baseline --check
 
 - [run →](run.md) — Full `run` command documentation
 - [init →](init.md) — Setting up ESLint integration
+- [init-context →](init-context.md) — Generating rules for AI agents
 - [doctor →](doctor.md) — Diagnosing setup issues
 - [preset →](preset.md) — Switching recommended/strict/security presets
 - [ignore →](ignore.md) — Adding default ignore patterns
