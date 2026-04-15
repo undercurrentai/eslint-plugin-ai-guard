@@ -1,6 +1,6 @@
 # ai-guard init
 
-Automatically configure `eslint-plugin-ai-guard` in your project. Detects your ESLint version, generates or patches your config file, and tells you exactly what to install if anything is missing.
+Automatically configure `@undercurrent/eslint-plugin-ai-guard` in your project. Detects your ESLint version, generates or patches your config file, and tells you exactly what to install if anything is missing.
 
 ---
 
@@ -55,17 +55,17 @@ ai-guard init --flat
   ── Environment ──
 
   ✔  ESLint 9.1.0 found (v9)
-  ✖  eslint-plugin-ai-guard not found
+  ✖  @undercurrent/eslint-plugin-ai-guard not found
 
   ── Missing Dependencies ──
 
   ⚠  The following packages are not installed:
 
-    → eslint-plugin-ai-guard
+    → @undercurrent/eslint-plugin-ai-guard
 
   Run this first:
 
-    npm install --save-dev eslint-plugin-ai-guard
+    npm install --save-dev @undercurrent/eslint-plugin-ai-guard
 
   Then re-run ai-guard init to complete setup.
 ```
@@ -104,7 +104,7 @@ eslint.config.mjs.bak  ← original backup
 ### ESLint v9 (`eslint.config.mjs`)
 
 ```javascript
-import aiGuardPlugin from 'eslint-plugin-ai-guard';
+import aiGuardPlugin from '@undercurrent/eslint-plugin-ai-guard';
 
 export default [
   {

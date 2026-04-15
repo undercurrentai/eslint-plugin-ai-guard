@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
+import { PLUGIN_NAMES } from './constants.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ function detectNukeIgnore(configPath: string | null): boolean {
 export function detect(cwd = process.cwd()): DetectionResult {
   const eslintVersion = getPackageVersion('eslint', cwd);
   const eslintMajor = parseMajor(eslintVersion);
-  const pluginInstalled = isPackageInstalled('eslint-plugin-ai-guard', cwd);
+  const pluginInstalled = PLUGIN_NAMES.some((name) => isPackageInstalled(name, cwd));
 
   const { type: configType, path: configPath, allPaths } = detectConfigType(cwd);
 

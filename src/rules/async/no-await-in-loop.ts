@@ -2,7 +2,7 @@ import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree, TSESLint } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
+  (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
 );
 
 const LOOP_TYPES = new Set([
@@ -510,15 +510,17 @@ export const noAwaitInLoop = createRule({
   name: 'no-await-in-loop',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['no-await-in-loop'],
     docs: {
       description:
-        'Disallow independent `await` usage inside loops, while allowing intentional retry/fallback/sequential workflows. AI tools frequently generate accidental sequential awaits where Promise.all would be safer and faster.',
+        '[DEPRECATED — use ESLint core `no-await-in-loop`] Disallow independent `await` usage inside loops. Kept for backwards-compatibility in v2.x; removed in v3.0.',
     },
     fixable: 'code',
     schema: [],
     messages: {
       awaitInLoop:
-        'Unexpected `await` inside a {{loopType}}. AI tools frequently generate sequential awaits in loops, causing O(n) latency. Consider collecting promises and using `Promise.all()` for parallel execution.',
+        '[ai-guard deprecated — use ESLint core `no-await-in-loop`] Unexpected `await` inside a {{loopType}}. AI tools frequently generate sequential awaits in loops, causing O(n) latency. Consider `Promise.all()` for parallel execution.',
     },
   },
   defaultOptions: [],

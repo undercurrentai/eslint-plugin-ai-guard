@@ -3,20 +3,19 @@ import type { TSESLint } from '@typescript-eslint/utils';
 const strict: TSESLint.ClassicConfig.Config = {
   plugins: ['ai-guard'],
   rules: {
-    // Strict preset: enforce every ai-guard rule at error for mature teams
+    // Strict preset: enforce every active ai-guard rule at error for mature teams
     // that want maximum coverage and are ready to tune exceptions locally.
+    //
+    // v2.0: 5 deprecated rules removed from strict — users who want them must
+    // opt in explicitly in their own config (they remain available). See
+    // docs/migration/v1-to-v2.md for the upstream replacements.
 
     // Error Handling - all at error
     'ai-guard/no-empty-catch': 'error',
-    'ai-guard/no-broad-exception': 'error',
     'ai-guard/no-catch-log-rethrow': 'error',
-    'ai-guard/no-catch-without-use': 'error',
     // Async - all at error
     'ai-guard/no-async-array-callback': 'error',
     'ai-guard/no-floating-promise': 'error',
-    'ai-guard/no-await-in-loop': 'error',
-    'ai-guard/no-async-without-await': 'error',
-    'ai-guard/no-redundant-await': 'error',
     // Security - all at error
     'ai-guard/no-hardcoded-secret': 'error',
     'ai-guard/no-eval-dynamic': 'error',

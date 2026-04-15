@@ -42,12 +42,12 @@ This uses the programmatic ESLint API internally — no `eslint.config.mjs`, no 
 ## Step 2 — Install the Plugin
 
 ```bash
-npm install --save-dev eslint-plugin-ai-guard
+npm install --save-dev @undercurrent/eslint-plugin-ai-guard
 ```
 
 > **Peer dependency:** ESLint ≥ 8.0.0 is required. If you don't have it, install it too:
 > ```bash
-> npm install --save-dev eslint eslint-plugin-ai-guard
+> npm install --save-dev eslint @undercurrent/eslint-plugin-ai-guard
 > ```
 
 ---
@@ -69,7 +69,7 @@ This detects your ESLint version, generates the appropriate config format (flat 
 **ESLint v9 — `eslint.config.mjs`:**
 
 ```javascript
-import aiGuard from 'eslint-plugin-ai-guard';
+import aiGuard from '@undercurrent/eslint-plugin-ai-guard';
 
 export default [
   {
@@ -110,7 +110,7 @@ npx eslint . --ext .ts,.tsx,.js,.jsx
 
 ## Step 5 — Add to Your Editor
 
-With `eslint-plugin-ai-guard` in your ESLint config, most editors will pick it up automatically:
+With `@undercurrent/eslint-plugin-ai-guard` in your ESLint config, most editors will pick it up automatically:
 
 - **VS Code**: Install the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint). Issues appear inline.
 - **Cursor / Windsurf / Zed**: Built-in ESLint support — works automatically.

@@ -1,4 +1,4 @@
-# eslint-plugin-ai-guard
+# @undercurrent/eslint-plugin-ai-guard
 
 AST-first ESLint plugin for AI-generated code pitfalls.
 

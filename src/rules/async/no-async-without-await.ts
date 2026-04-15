@@ -2,7 +2,7 @@ import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
+  (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
 );
 
 function containsAwaitExpression(node: TSESTree.Node): boolean {
@@ -54,15 +54,17 @@ export const noAsyncWithoutAwait = createRule({
   name: 'no-async-without-await',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['@typescript-eslint/require-await'],
     docs: {
       description:
-        'Disallow async functions that never use await. AI tools frequently add async by default, creating misleading signatures and unnecessary Promise wrappers.',
+        '[DEPRECATED — use `@typescript-eslint/require-await`] Disallow async functions that never use await. Kept for backwards-compatibility in v2.x; removed in v3.0.',
     },
     fixable: undefined,
     schema: [],
     messages: {
       asyncWithoutAwait:
-        'Async function does not contain `await`. AI tools frequently add `async` unnecessarily, which can mislead callers and mask intent. Remove `async` or add proper await logic.',
+        '[ai-guard deprecated — use `@typescript-eslint/require-await`] Async function does not contain `await`. Remove `async` or add proper await logic.',
     },
   },
   defaultOptions: [],

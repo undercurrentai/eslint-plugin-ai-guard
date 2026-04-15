@@ -46,7 +46,44 @@ describe('integration: express app sample', () => {
 
     expect(ruleIds).toContain('ai-guard/no-empty-catch');
     expect(ruleIds).toContain('ai-guard/no-console-in-handler');
-    expect(ruleIds).toContain('ai-guard/no-await-in-loop');
     expect(ruleIds).toContain('ai-guard/require-authz-check');
+
+    // v2.0: `no-await-in-loop` is deprecated and no longer in the strict preset.
+    // Users who want it must opt in explicitly (see the follow-up test).
+    expect(ruleIds).not.toContain('ai-guard/no-await-in-loop');
+  });
+
+  it('still fires deprecated rules when explicitly opted in, with a deprecation-prefixed message', async () => {
+    const eslint = new ESLint({
+      overrideConfigFile: true,
+      overrideConfig: [
+        {
+          files: ['**/*.js'],
+          plugins: {
+            'ai-guard': aiGuard,
+          },
+          rules: {
+            'ai-guard/no-await-in-loop': 'error',
+          },
+        },
+      ],
+      ignore: false,
+    });
+
+    const code = `
+      async function syncUsers(users) {
+        for (const user of users) {
+          await saveUser(user);
+        }
+      }
+    `;
+
+    const [result] = await eslint.lintText(code, { filePath: 'sample.js' });
+    const awaitInLoopMessages = result.messages.filter(
+      (m) => m.ruleId === 'ai-guard/no-await-in-loop'
+    );
+
+    expect(awaitInLoopMessages.length).toBeGreaterThan(0);
+    expect(awaitInLoopMessages[0].message).toContain('[ai-guard deprecated');
   });
 });

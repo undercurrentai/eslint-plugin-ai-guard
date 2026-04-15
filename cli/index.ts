@@ -31,7 +31,7 @@ const program = new Command();
 program
   .name('ai-guard')
   .description(
-    'Production-grade CLI for eslint-plugin-ai-guard\n' +
+    'Production-grade CLI for @undercurrent/eslint-plugin-ai-guard\n' +
     'Catch AI-generated code issues instantly — no ESLint config required.\n\n' +
     'Quick start:\n' +
     '  npx ai-guard run          Scan current project\n' +
@@ -68,7 +68,7 @@ process.on('unhandledRejection', (reason: unknown) => {
     reason instanceof Error ? reason.message : String(reason);
   log.error(`Unexpected error: ${msg}`);
   log.info('If this looks like a bug, please report it at:');
-  log.info('  https://github.com/YashJadhav21/eslint-plugin-ai-guard/issues');
+  log.info('  https://github.com/undercurrentai/eslint-plugin-ai-guard/issues');
   process.exit(1);
 });
 

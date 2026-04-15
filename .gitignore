@@ -27,3 +27,5 @@ ai-guard-reference.*
 test-sample.tsx
 *.tgz
 .vscode/
+# bug-hunt scratch dir
+.codex_runs/

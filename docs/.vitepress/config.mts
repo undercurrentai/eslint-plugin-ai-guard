@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress';
 
 export default defineConfig({
-  title: 'eslint-plugin-ai-guard',
+  title: '@undercurrent/eslint-plugin-ai-guard',
   description: 'AST-first ESLint rules for AI-generated code pitfalls',
   themeConfig: {
     nav: [
@@ -18,6 +18,13 @@ export default defineConfig({
           { text: 'Full Setup Guide', link: '/guides/getting-started' },
           { text: 'Migrating Existing Project', link: '/guides/migrating-existing-project' },
           { text: 'CI Integration', link: '/guides/ci-integration' },
+          { text: 'Compat Config (v2.0)', link: '/guides/compat-config' },
+        ],
+      },
+      {
+        text: 'Migration',
+        items: [
+          { text: 'v1.x → v2.x', link: '/migration/v1-to-v2' },
         ],
       },
       {

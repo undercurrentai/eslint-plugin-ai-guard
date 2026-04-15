@@ -1,22 +1,24 @@
 import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
+  (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
 );
 
 export const noBroadException = createRule({
   name: 'no-broad-exception',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['@typescript-eslint/no-explicit-any'],
     docs: {
       description:
-        'Disallow overly broad catch clause types such as `catch (e: any)` or `catch (e: unknown)` without narrowing. AI tools frequently use `any` type annotations on catch parameters, hiding the actual error type and preventing proper error handling.',
+        '[DEPRECATED — partial coverage by `@typescript-eslint/no-explicit-any` plus TypeScript `useUnknownInCatchVariables: true`] Disallow `catch (e: any)` or `catch (e: unknown)` without narrowing. Kept for backwards-compatibility in v2.x; removed in v3.0.',
     },
     fixable: undefined,
     schema: [],
     messages: {
       broadException:
-        'Catch parameter has an overly broad type annotation `{{type}}`. AI tools frequently generate `catch (e: any)` which hides the real error type. Use a specific error type or narrow with `instanceof` checks inside the catch block.',
+        '[ai-guard deprecated — use `@typescript-eslint/no-explicit-any`] Catch parameter has an overly broad type annotation `{{type}}`. Use a specific error type or narrow with `instanceof` checks.',
     },
   },
   defaultOptions: [],
