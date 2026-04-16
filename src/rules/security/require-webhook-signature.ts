@@ -5,6 +5,7 @@ import {
   getPathString,
   hasImport,
   AST_SKIP_KEYS,
+  STOP_DESCENT_NODE_TYPES,
   isASTNode,
   localComesFrom,
   safeCompileRegex,
@@ -157,9 +158,11 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
         const value = (node as unknown as Record<string, unknown>)[key];
         if (Array.isArray(value)) {
           for (const child of value) {
-            if (isASTNode(child) && walkForVerification(child, seen)) return true;
+            if (isASTNode(child) && !STOP_DESCENT_NODE_TYPES.has(child.type)) {
+              if (walkForVerification(child, seen)) return true;
+            }
           }
-        } else if (isASTNode(value)) {
+        } else if (isASTNode(value) && !STOP_DESCENT_NODE_TYPES.has(value.type)) {
           if (walkForVerification(value, seen)) return true;
         }
       }

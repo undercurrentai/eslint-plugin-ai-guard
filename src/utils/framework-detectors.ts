@@ -22,7 +22,9 @@ const FRAMEWORK_MODULES: Record<string, FrameworkKind> = {
   '@nestjs/core': 'nestjs',
 };
 
-const NEXTJS_ROUTE_PATTERN = /[/\\]app[/\\].+[/\\]route\.(ts|tsx|js|jsx)$/;
+// Match Next.js App Router route handlers. Allows top-level `app/route.ts`
+// (root catch-all) by using `.*` instead of `.+` (audit M9).
+const NEXTJS_ROUTE_PATTERN = /[/\\]app[/\\](.*[/\\])?route\.(ts|tsx|js|jsx)$/;
 
 export function buildImportMap(
   sourceCode: TSESLint.SourceCode,
@@ -77,14 +79,6 @@ export function isNextjsRouteHandler(filename: string): boolean {
 
 export function hasImport(importMap: ImportMap, moduleName: string): boolean {
   return importMap.modules.has(moduleName);
-}
-
-export function hasImportFrom(
-  importMap: ImportMap,
-  moduleName: string,
-  importedName: string,
-): boolean {
-  return importMap.modules.get(moduleName)?.has(importedName) ?? false;
 }
 
 export function localComesFrom(
@@ -183,19 +177,6 @@ export function isCallToName(
   return false;
 }
 
-export function isMemberCallTo(
-  node: TSESTree.CallExpression,
-  methods: Set<string>,
-): boolean {
-  if (
-    node.callee.type === AST_NODE_TYPES.MemberExpression &&
-    node.callee.property.type === AST_NODE_TYPES.Identifier
-  ) {
-    return methods.has(node.callee.property.name);
-  }
-  return false;
-}
-
 export function bodyContainsCallTo(
   body: TSESTree.BlockStatement,
   names: Set<string>,
@@ -208,6 +189,15 @@ export function bodyContainsCallTo(
 export const AST_SKIP_KEYS = new Set([
   'parent', 'loc', 'range',
   'typeAnnotation', 'returnType', 'typeParameters', 'typeArguments',
+]);
+
+// Node types to stop descent at. Nested FunctionDeclarations are declared but
+// not invoked inline — finding an authz/verification call inside them is a
+// false positive (dead code). Arrow functions and function expressions are
+// commonly passed as callbacks (await, .then, transaction, etc.) so we DO
+// descend into those. This is a pragmatic trade-off; see security audit H1.
+export const STOP_DESCENT_NODE_TYPES = new Set([
+  AST_NODE_TYPES.FunctionDeclaration,
 ]);
 
 function walkForCall(
@@ -230,11 +220,11 @@ function walkForCall(
     const value = (node as unknown as Record<string, unknown>)[key];
     if (Array.isArray(value)) {
       for (const child of value) {
-        if (isASTNode(child)) {
+        if (isASTNode(child) && !STOP_DESCENT_NODE_TYPES.has(child.type)) {
           if (walkForCall(child, names, seen)) return true;
         }
       }
-    } else if (isASTNode(value)) {
+    } else if (isASTNode(value) && !STOP_DESCENT_NODE_TYPES.has(value.type)) {
       if (walkForCall(value, names, seen)) return true;
     }
   }
@@ -261,6 +251,27 @@ export function safeCompileRegex(pattern: string, maxLength = 200): RegExp | nul
   } catch {
     return null;
   }
+}
+
+/**
+ * Unwrap TS-only wrapper nodes that don't change runtime semantics:
+ * - `(x as Foo)` — TSAsExpression
+ * - `x!` — TSNonNullExpression
+ * - `x satisfies Foo` — TSSatisfiesExpression
+ *
+ * Used by callee-receiver checks so type-asserted code (`(app as Application).get(...)`)
+ * is treated identically to plain `app.get(...)`.
+ */
+export function unwrapTSExpression(node: TSESTree.Node): TSESTree.Node {
+  let current: TSESTree.Node = node;
+  while (
+    current.type === AST_NODE_TYPES.TSAsExpression ||
+    current.type === AST_NODE_TYPES.TSNonNullExpression ||
+    current.type === AST_NODE_TYPES.TSSatisfiesExpression
+  ) {
+    current = current.expression;
+  }
+  return current;
 }
 
 export function isASTNode(value: unknown): value is TSESTree.Node {

@@ -10,6 +10,7 @@ import {
   bodyContainsCallTo,
   hasImport,
   safeCompileRegex,
+  unwrapTSExpression,
   type ImportMap,
   type FrameworkKind,
 } from '../../utils/framework-detectors';
@@ -49,27 +50,30 @@ const NESTJS_HTTP_DECORATORS = new Set([
 
 const NESTJS_MUTATING_DECORATORS = new Set(['Post', 'Put', 'Patch', 'Delete']);
 
+// Anchored with `(\/|$)` so /^\/auth/ does not match /authentication-token,
+// /^\/register/ does not match /registry/items, etc. (audit M2)
 const DEFAULT_PUBLIC_ROUTE_PATTERNS = [
   /^\/?$/,
   /^\*$/,
   /^\/\*$/,
-  /^\/health/,
-  /^\/ping/,
-  /^\/status/,
-  /^\/api\/v\d+\/auth/,
-  /^\/auth/,
-  /^\/login/,
-  /^\/register/,
-  /^\/signup/,
-  /^\/forgot/,
-  /^\/reset/,
-  /^\/public/,
-  /^\/assets/,
-  /^\/static/,
-  /^\/favicon/,
-  /^\/robots/,
-  /^\/sitemap/,
-  /^\/.well-known/,
+  /^\/health(\/|$)/,
+  /^\/healthz(\/|$)/,
+  /^\/ping(\/|$)/,
+  /^\/status(\/|$)/,
+  /^\/api\/v\d+\/auth(\/|$)/,
+  /^\/auth(\/|$)/,
+  /^\/login(\/|$)/,
+  /^\/register(\/|$)/,
+  /^\/signup(\/|$)/,
+  /^\/forgot(\/|$)/,
+  /^\/reset(\/|$)/,
+  /^\/public(\/|$)/,
+  /^\/assets(\/|$)/,
+  /^\/static(\/|$)/,
+  /^\/favicon(\/|$|\.)/,
+  /^\/robots(\/|$|\.)/,
+  /^\/sitemap(\/|$|\.)/,
+  /^\/\.well-known(\/|$)/,
 ];
 
 const HONO_AUTH_MODULES = new Set([
@@ -190,7 +194,9 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       if (!HTTP_METHODS.has(methodName)) return false;
       if (mutatingOnly && !MUTATING_METHODS.has(methodName)) return false;
 
-      const obj = node.callee.object;
+      // Unwrap TS-only wrappers so `(app as Application).get(...)` is treated
+      // the same as `app.get(...)`. AI-generated TS code commonly emits these.
+      const obj = unwrapTSExpression(node.callee.object);
       if (obj.type === AST_NODE_TYPES.Identifier) {
         const name = obj.name.toLowerCase();
         if (name === 'router' || name === 'app' || name === 'fastify' || name === 'server' || name.includes('router')) {
@@ -261,10 +267,90 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       return false;
     }
 
+    function checkHonoOnRoute(node: TSESTree.CallExpression): void {
+      // app.on(method | method[], path, ...handlers)
+      const args = node.arguments;
+      if (args.length < 3) return;
+
+      const methodArg = args[0];
+      let methodLabel = '';
+      let isMutating = false;
+
+      const recordMethod = (s: string) => {
+        const lower = s.toLowerCase();
+        if (MUTATING_METHODS.has(lower)) isMutating = true;
+        methodLabel = methodLabel ? `${methodLabel}|${s.toUpperCase()}` : s.toUpperCase();
+      };
+
+      if (methodArg.type === AST_NODE_TYPES.Literal && typeof methodArg.value === 'string') {
+        recordMethod(methodArg.value);
+      } else if (methodArg.type === AST_NODE_TYPES.ArrayExpression) {
+        for (const el of methodArg.elements) {
+          if (el && el.type === AST_NODE_TYPES.Literal && typeof el.value === 'string') {
+            recordMethod(el.value);
+          }
+        }
+      } else {
+        // Dynamic method — assume worst case (mutating) so we still check
+        isMutating = true;
+        methodLabel = '<dynamic>';
+      }
+
+      if (mutatingOnly && !isMutating) return;
+
+      const pathStr = getPathString(args[1]);
+      if (pathStr && isPublicRoute(pathStr)) return;
+
+      const middlewareArgs = args.slice(2, -1);
+      if (middlewareArgs.some((arg) => isAuthMiddleware(arg))) return;
+
+      context.report({
+        node,
+        messageId: 'missingAuth',
+        data: { method: methodLabel || 'ON', path: pathStr || '<dynamic>' },
+      });
+    }
+
     function checkExpressHonoRoute(node: TSESTree.CallExpression): void {
       const callee = node.callee as TSESTree.MemberExpression;
       const method = (callee.property as TSESTree.Identifier).name;
       const args = node.arguments;
+
+      // Express chained route form: router.route('/x').post(auth, handler)
+      // Path is inside the inner .route() call; args here are [...middleware, handler] only.
+      const obj = unwrapTSExpression(callee.object);
+      if (
+        obj.type === AST_NODE_TYPES.CallExpression &&
+        obj.callee.type === AST_NODE_TYPES.MemberExpression &&
+        obj.callee.property.type === AST_NODE_TYPES.Identifier &&
+        obj.callee.property.name === 'route'
+      ) {
+        const inheritedPath = obj.arguments[0]
+          ? getPathString(obj.arguments[0])
+          : null;
+        if (inheritedPath && isPublicRoute(inheritedPath)) return;
+        // For chained form, all args are middleware + final handler (no path arg)
+        const middlewareArgs = args.slice(0, -1);
+        if (args.length === 0) return; // .post() with no handler — invalid syntax, skip
+        if (args.length === 1) {
+          // Only handler, no middleware
+          context.report({
+            node,
+            messageId: 'missingAuth',
+            data: { method: method.toUpperCase(), path: inheritedPath || '<dynamic>' },
+          });
+          return;
+        }
+        if (!middlewareArgs.some((arg) => isAuthMiddleware(arg))) {
+          context.report({
+            node,
+            messageId: 'missingAuth',
+            data: { method: method.toUpperCase(), path: inheritedPath || '<dynamic>' },
+          });
+        }
+        return;
+      }
+
       if (args.length < 2) return;
 
       const pathStr = getPathString(args[0]);
@@ -354,6 +440,18 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
         checkBlanketAuth(node);
         if (hasBlanketAuth) return;
 
+        // Hono multi-method form: app.on(['POST','PUT'], path, ...handlers)
+        // or app.on('GET', path, ...handlers). Method is in arg 0, path is arg 1.
+        if (
+          framework === 'hono' &&
+          node.callee.type === AST_NODE_TYPES.MemberExpression &&
+          node.callee.property.type === AST_NODE_TYPES.Identifier &&
+          node.callee.property.name === 'on'
+        ) {
+          checkHonoOnRoute(node);
+          return;
+        }
+
         if (!isRouteDefinition(node)) return;
 
         if (framework === 'fastify') {
@@ -374,6 +472,9 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
         for (const member of node.body.body) {
           if (member.type !== AST_NODE_TYPES.MethodDefinition) continue;
           if (member.kind !== 'method') continue;
+          // NestJS doesn't dispatch HTTP requests to static methods. Skip
+          // them to avoid over-reports on legal but non-routable members.
+          if (member.static) continue;
 
           const httpDecorators = member.decorators?.filter((d) => {
             const name = getDecoratorCallName(d);

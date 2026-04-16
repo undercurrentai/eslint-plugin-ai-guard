@@ -291,3 +291,90 @@ ruleTester.run('require-framework-authz', requireFrameworkAuthz, {
     },
   ],
 });
+
+// ---------------------------------------------------------------------------
+// Audit-fix regression tests (ultrathink phase)
+// ---------------------------------------------------------------------------
+
+ruleTester.run('require-framework-authz (audit — nested function descent)', requireFrameworkAuthz, {
+  invalid: [
+    // H1: authz call inside a never-invoked FunctionDeclaration is dead code
+    // and must NOT be treated as a real authz check
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          function helperNeverCalled() {
+            authorize(req.user, req.params.id);
+          }
+          const item = db.get(req.params.id);
+          res.json(item);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+  ],
+  valid: [
+    // Authz call inside a callback (ArrowFunctionExpression as arg) IS allowed,
+    // because callbacks typically execute. Conservative trade-off.
+    {
+      code: `
+        router.get('/users/:id', async (req, res) => {
+          await db.transaction(async (tx) => {
+            authorize(req.user, req.params.id);
+            const item = tx.get(req.params.id);
+            res.json(item);
+          });
+        });
+      `,
+    },
+  ],
+});
+
+ruleTester.run('require-framework-authz (audit — destructured resource id)', requireFrameworkAuthz, {
+  invalid: [
+    // H6: destructured `const { id } = req.params` with no authz
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          const { id } = req.params;
+          const user = db.find(id);
+          res.json(user);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+    // H6: destructured request.params (Fastify)
+    {
+      code: `
+        router.get('/users/:id', (request, reply) => {
+          const { userId } = request.params;
+          const u = db.find(userId);
+          reply.send(u);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+  ],
+  valid: [
+    // H6: destructured but with authz before access
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          authorize(req.user, req.params.id);
+          const { id } = req.params;
+          const user = db.find(id);
+          res.json(user);
+        });
+      `,
+    },
+    // H6: non-id destructure should not trigger
+    {
+      code: `
+        router.get('/users', (req, res) => {
+          const { name } = req.body;
+          res.json({ name });
+        });
+      `,
+    },
+  ],
+});

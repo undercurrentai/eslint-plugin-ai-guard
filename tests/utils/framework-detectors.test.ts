@@ -1,34 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { ESLint } from 'eslint';
 import {
-  buildImportMap,
-  detectFramework,
   isNextjsRouteHandler,
   hasDecoratorNamed,
   getDecoratorCallName,
   getMemberPath,
   getPathString,
   isCallToName,
-  isMemberCallTo,
-  hasImport,
-  hasImportFrom,
-  localComesFrom,
   safeCompileRegex,
 } from '../../src/utils/framework-detectors';
 import type { TSESTree } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-
-// Helper: parse code and get sourceCode via ESLint
-async function parseCode(code: string) {
-  const eslint = new ESLint({
-    overrideConfigFile: true,
-    overrideConfig: [{ files: ['**/*.ts'], rules: {} }],
-    ignore: false,
-  });
-  const [result] = await eslint.lintText(code, { filePath: 'test.ts' });
-  // Access AST via the internal ESLint result — we use a custom rule to extract it
-  return result;
-}
 
 describe('isNextjsRouteHandler', () => {
   it.each([
@@ -41,7 +22,7 @@ describe('isNextjsRouteHandler', () => {
     ['/project/app/page.tsx', false],
     ['/project/app/layout.ts', false],
     ['/project/routes/route.ts', false],
-    ['/project/app/route.ts', false], // needs a segment between app and route
+    ['/project/app/route.ts', true], // top-level App Router root catch-all (audit M9)
   ])('%s → %s', (filename, expected) => {
     expect(isNextjsRouteHandler(filename)).toBe(expected);
   });
@@ -143,30 +124,6 @@ describe('isCallToName', () => {
       arguments: [],
     } as unknown as TSESTree.CallExpression;
     expect(isCallToName(node, new Set(['authenticate']))).toBe(true);
-  });
-});
-
-describe('isMemberCallTo', () => {
-  it('matches method name on member expression', () => {
-    const node = {
-      type: AST_NODE_TYPES.CallExpression,
-      callee: {
-        type: AST_NODE_TYPES.MemberExpression,
-        object: { type: AST_NODE_TYPES.Identifier, name: 'ability' },
-        property: { type: AST_NODE_TYPES.Identifier, name: 'can' },
-      },
-      arguments: [],
-    } as unknown as TSESTree.CallExpression;
-    expect(isMemberCallTo(node, new Set(['can', 'cannot']))).toBe(true);
-  });
-
-  it('does not match non-member call', () => {
-    const node = {
-      type: AST_NODE_TYPES.CallExpression,
-      callee: { type: AST_NODE_TYPES.Identifier, name: 'can' },
-      arguments: [],
-    } as unknown as TSESTree.CallExpression;
-    expect(isMemberCallTo(node, new Set(['can']))).toBe(false);
   });
 });
 

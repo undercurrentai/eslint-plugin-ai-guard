@@ -13,7 +13,8 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 - **2 rules deprecated** (removed in v3.0.0). Replaced by framework-aware versions:
   - `ai-guard/require-auth-middleware` → `ai-guard/require-framework-auth`
   - `ai-guard/require-authz-check` → `ai-guard/require-framework-authz`
-- **`/webhook` is no longer a public-route default.** Webhook routes must now either pass an auth check or pass signature verification (handled by the new `require-webhook-signature` rule). This was a known defect in v1: `require-auth-middleware` exempted `/webhook*` paths, but Stripe/GitHub/Slack webhooks need cryptographic signature verification, not auth.
+- **`/webhook*` is no longer a public-route default** — the default `publicRoutePatterns` in `require-framework-auth` no longer exempts webhook paths. Webhook routes must now either pass an auth check or pass signature verification (handled by the new `require-webhook-signature` rule). This was a known defect in v1: `require-auth-middleware` exempted `/webhook*` paths, but Stripe/GitHub/Slack webhooks need cryptographic signature verification, not auth.
+- **Tightened public-route boundaries.** Default patterns like `/^\/auth/` are now anchored with `(\/|$)` so `/authentication-token`, `/registry/items`, and `/resetpassword/admin` are no longer accidentally exempted.
 - **Presets updated.** `recommended`, `strict`, and `security` now use the new framework-aware rules. The 2 deprecated rules continue to emit with `[ai-guard deprecated — use X]` prefix.
 
 ### Added
@@ -31,6 +32,23 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 
 - Plugin version bumped to `2.0.0-beta.2`.
 - CLI rule maps (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) updated to reference the new rules.
+
+### Fixed
+
+8 correctness fixes applied during the audit phase, each covered by regression tests:
+
+- Decorator detection now handles member-expression form (`@Common.UseGuards()`) — previously silently skipped NestJS methods using barrel-imported decorators.
+- `isRouteDefinition` now unwraps `TSAsExpression` / `TSNonNullExpression` / `TSSatisfiesExpression` — previously `(app as Application).get(...)` was not detected.
+- Express chained `.route('/x').post(auth, handler)` form now handled correctly — previously misread the auth middleware as the path.
+- Hono multi-method `app.on(['POST','PUT'], path, handler)` form now detected.
+- NestJS static methods on `@Controller` classes are now skipped (they're not HTTP-dispatched).
+- `require-framework-authz` now detects destructured `const { id } = req.params` patterns and supports Fastify's `request.` prefix (not just Express's `req.`).
+- AST walkers skip nested `FunctionDeclaration` bodies to avoid false-negatives from dead-code authz/verification calls in never-invoked helpers.
+- Top-level `app/route.ts` (App Router root catch-all) now correctly detected as a Next.js route handler.
+
+### Internal
+
+- Removed inherited-from-upstream dead utility file `src/utils/ast-helpers.ts` (0 callers).
 
 ## [2.0.0-beta.1] — 2026-04-15
 

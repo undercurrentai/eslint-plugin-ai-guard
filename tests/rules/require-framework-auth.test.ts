@@ -632,3 +632,192 @@ decoratorRuleTester.run('require-framework-auth (NestJS mutatingOnly)', requireF
     },
   ],
 });
+
+// ---------------------------------------------------------------------------
+// Audit-fix regression tests (ultrathink phase)
+// ---------------------------------------------------------------------------
+
+ruleTester.run('require-framework-auth (audit — TS expressions)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import express from 'express';
+        const app = express();
+        (app as any).post('/items', protect, handler);
+      `,
+    },
+  ],
+  invalid: [
+    {
+      code: `
+        import express from 'express';
+        const app = express();
+        (app as any).post('/items', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    {
+      code: `
+        import Fastify from 'fastify';
+        const fastify = Fastify();
+        fastify!.post('/items', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+  ],
+});
+
+ruleTester.run('require-framework-auth (audit — Express .route() chain)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.route('/users').post(authenticate, createUser);
+      `,
+    },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.route('/health').get(handler);
+      `,
+    },
+  ],
+  invalid: [
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.route('/users').post(createUser);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+  ],
+});
+
+ruleTester.run('require-framework-auth (audit — Hono app.on)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        app.on(['POST', 'PUT'], '/users/:id', authenticate, updateUser);
+      `,
+    },
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        app.on('GET', '/health', handler);
+      `,
+    },
+  ],
+  invalid: [
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        app.on(['POST', 'PUT'], '/users/:id', updateUser);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        app.on('DELETE', '/users/:id', deleteUser);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+  ],
+});
+
+ruleTester.run('require-framework-auth (audit — public route boundary)', requireFrameworkAuth, {
+  invalid: [
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.post('/authentication-token', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.post('/registry/items', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.post('/resetpassword/admin', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+  ],
+  valid: [
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.get('/favicon.ico', handler);
+      `,
+    },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.post('/auth/login', handler);
+      `,
+    },
+  ],
+});
+
+decoratorRuleTester.run('require-framework-auth (audit — NestJS static methods)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import { Controller, Post } from '@nestjs/common';
+        @Controller('users')
+        class UsersController {
+          static helper() { return {}; }
+        }
+      `,
+    },
+  ],
+  invalid: [],
+});
+
+decoratorRuleTester.run('require-framework-auth (audit — member-expression decorator)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import * as Common from '@nestjs/common';
+        @Common.Controller('users')
+        class UsersController {
+          @Common.UseGuards(AuthGuard)
+          @Common.Post()
+          create() { return {}; }
+        }
+      `,
+    },
+  ],
+  invalid: [
+    {
+      code: `
+        import * as Common from '@nestjs/common';
+        @Common.Controller('users')
+        class UsersController {
+          @Common.Post()
+          create() { return {}; }
+        }
+      `,
+      errors: [{ messageId: 'missingAuthNestjs' }],
+    },
+  ],
+});

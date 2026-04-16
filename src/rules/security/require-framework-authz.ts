@@ -6,6 +6,7 @@ import {
   getPathString,
   hasImport,
   AST_SKIP_KEYS,
+  STOP_DESCENT_NODE_TYPES,
   isASTNode,
   type ImportMap,
 } from '../../utils/framework-detectors';
@@ -173,9 +174,11 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
         const value = (node as unknown as Record<string, unknown>)[key];
         if (Array.isArray(value)) {
           for (const child of value) {
-            if (isASTNode(child) && walkForAuthz(child, seen)) return true;
+            if (isASTNode(child) && !STOP_DESCENT_NODE_TYPES.has(child.type)) {
+              if (walkForAuthz(child, seen)) return true;
+            }
           }
-        } else if (isASTNode(value)) {
+        } else if (isASTNode(value) && !STOP_DESCENT_NODE_TYPES.has(value.type)) {
           if (walkForAuthz(value, seen)) return true;
         }
       }
@@ -195,17 +198,44 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
           return path!.join('.');
         }
       }
+
+      // Destructured: `const { id } = req.params` — extract id-like fields
+      // from object patterns whose init traces to req.params|body|query.
+      // Detects the AI-codegen-common destructuring escape from member-access
+      // detection. (audit H6)
+      if (
+        node.type === AST_NODE_TYPES.VariableDeclarator &&
+        node.id.type === AST_NODE_TYPES.ObjectPattern &&
+        node.init
+      ) {
+        const initPath = getMemberPath(node.init);
+        if (initPath && initPath.length === 2) {
+          const sourceMatches =
+            (REQUEST_NAMES as readonly string[]).includes(initPath[0]) &&
+            (RESOURCE_FIELDS as readonly string[]).includes(initPath[1]);
+          if (sourceMatches) {
+            for (const prop of node.id.properties) {
+              if (prop.type !== AST_NODE_TYPES.Property) continue;
+              if (prop.key.type !== AST_NODE_TYPES.Identifier) continue;
+              const fieldName = prop.key.name.toLowerCase();
+              if (fieldName === 'id' || fieldName.endsWith('id')) {
+                return `${initPath[0]}.${initPath[1]}.${prop.key.name}`;
+              }
+            }
+          }
+        }
+      }
       for (const key of Object.keys(node)) {
         if (AST_SKIP_KEYS.has(key)) continue;
         const value = (node as unknown as Record<string, unknown>)[key];
         if (Array.isArray(value)) {
           for (const child of value) {
-            if (isASTNode(child)) {
+            if (isASTNode(child) && !STOP_DESCENT_NODE_TYPES.has(child.type)) {
               const found = walkForResourceAccess(child, seen);
               if (found) return found;
             }
           }
-        } else if (isASTNode(value)) {
+        } else if (isASTNode(value) && !STOP_DESCENT_NODE_TYPES.has(value.type)) {
           const found = walkForResourceAccess(value, seen);
           if (found) return found;
         }
