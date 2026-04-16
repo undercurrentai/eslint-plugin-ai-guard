@@ -190,6 +190,7 @@ export function registerBaselineCommand(program: Command): void {
           spinner.stop();
           log.error(err instanceof Error ? err.message : String(err));
           process.exit(1);
+          return;
         }
 
         const baselinePath = saveBaseline(result!, preset, mode, cwd);
@@ -211,6 +212,7 @@ export function registerBaselineCommand(program: Command): void {
           log.error(`No baseline found at ${chalk.white(BASELINE_FILE)}`);
           log.info(`Run ${chalk.cyan('ai-guard baseline --save')} first to create one.`);
           process.exit(1);
+          return;
         }
 
         const baselineDate = new Date(existingBaseline.createdAt).toLocaleString();
@@ -230,6 +232,7 @@ export function registerBaselineCommand(program: Command): void {
           spinner.stop();
           log.error(err instanceof Error ? err.message : String(err));
           process.exit(1);
+          return;
         }
 
         const compareMode = existingBaseline.mode ?? 'strict';
