@@ -595,6 +595,17 @@ ruleTester.run('require-framework-auth (mutatingOnly)', requireFrameworkAuth, {
       options: [{ mutatingOnly: true }],
       errors: [{ messageId: 'missingAuthNextjs' }],
     },
+    // 6. Hono app.on with mixed literal + dynamic methods should be treated as potentially mutating
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        const dynamicMethod = process.env.METHOD;
+        app.on(['GET', dynamicMethod], '/users/:id', handler);
+      `,
+      options: [{ mutatingOnly: true }],
+      errors: [{ messageId: 'missingAuth' }],
+    },
   ],
 });
 

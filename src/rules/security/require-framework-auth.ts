@@ -285,10 +285,19 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       if (methodArg.type === AST_NODE_TYPES.Literal && typeof methodArg.value === 'string') {
         recordMethod(methodArg.value);
       } else if (methodArg.type === AST_NODE_TYPES.ArrayExpression) {
+        let hasUnknownMethod = false;
         for (const el of methodArg.elements) {
           if (el && el.type === AST_NODE_TYPES.Literal && typeof el.value === 'string') {
             recordMethod(el.value);
+          } else if (el) {
+            hasUnknownMethod = true;
           }
+        }
+        // Mixed literal + dynamic arrays (e.g., ['GET', someVar]) should not be
+        // treated as read-only under mutatingOnly.
+        if (hasUnknownMethod || methodLabel === '') {
+          isMutating = true;
+          methodLabel = methodLabel ? `${methodLabel}|<dynamic>` : '<dynamic>';
         }
       } else {
         // Dynamic method — assume worst case (mutating) so we still check
