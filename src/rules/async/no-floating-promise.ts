@@ -285,6 +285,23 @@ function isPromiseLikeByTypeInfo(
   }
 }
 
+function getCallExpression(
+  expression: TSESTree.Expression,
+): TSESTree.CallExpression | null {
+  if (expression.type === AST_NODE_TYPES.CallExpression) {
+    return expression;
+  }
+
+  if (
+    expression.type === AST_NODE_TYPES.ChainExpression &&
+    expression.expression.type === AST_NODE_TYPES.CallExpression
+  ) {
+    return expression.expression;
+  }
+
+  return null;
+}
+
 /**
  * Check if the ExpressionStatement is already handled:
  * - Used as argument to .then() or .catch()
@@ -294,11 +311,12 @@ function isPromiseLikeByTypeInfo(
  */
 function isExpressionHandled(node: TSESTree.ExpressionStatement): boolean {
   const expr = node.expression;
+  const callExpr = getCallExpression(expr);
 
   // Check if the expression is a call chained with .then() or .catch()
-  if (expr.type === AST_NODE_TYPES.CallExpression) {
-    if (expr.callee.type === AST_NODE_TYPES.MemberExpression) {
-      const prop = expr.callee.property;
+  if (callExpr) {
+    if (callExpr.callee.type === AST_NODE_TYPES.MemberExpression) {
+      const prop = callExpr.callee.property;
       if (prop.type === AST_NODE_TYPES.Identifier) {
         if (prop.name === 'then' || prop.name === 'catch' || prop.name === 'finally') {
           return true;
@@ -347,17 +365,15 @@ export const noFloatingPromise = createRule({
           return;
         }
 
-        // We only care about bare CallExpression statements
-        if (node.expression.type !== AST_NODE_TYPES.CallExpression) {
-          return;
-        }
-
         // If it's already chained with .then()/.catch() or wrapped in void, skip
         if (isExpressionHandled(node)) {
           return;
         }
 
-        const callExpr = node.expression;
+        const callExpr = getCallExpression(node.expression);
+        if (!callExpr) {
+          return;
+        }
         const localAsyncInfo = isLocallyAsyncCallee(callExpr, context);
 
         // If a local async helper already contains its own try/catch,

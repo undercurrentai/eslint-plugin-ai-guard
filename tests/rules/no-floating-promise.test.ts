@@ -130,6 +130,13 @@ ruleTester.run('no-floating-promise', noFloatingPromise, {
         hydrate();
       `,
     },
+    // 19. Optional call with catch handler
+    {
+      code: `
+        const doWork = async () => 1;
+        doWork?.().catch((err) => console.error(err));
+      `,
+    },
   ],
   invalid: [
     // 1. Bare fetch() call as statement
@@ -190,6 +197,14 @@ ruleTester.run('no-floating-promise', noFloatingPromise, {
           await fetch('/api/slots');
         };
         fetchDentistSlots();
+      `,
+      errors: [{ messageId: 'floatingPromise' }],
+    },
+    // 10. Optional call to async function without handling
+    {
+      code: `
+        const doWork = async () => 1;
+        doWork?.();
       `,
       errors: [{ messageId: 'floatingPromise' }],
     },
