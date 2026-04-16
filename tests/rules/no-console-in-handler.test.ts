@@ -199,5 +199,11 @@ ruleTester.run('no-console-in-handler', noConsoleInHandler, {
       `,
       errors: [{ messageId: 'noConsoleInHandler', suggestions: 1 }],
     },
+    {
+      code: `
+        app.get('/expr', (req, res) => console.log('expr'));
+      `,
+      errors: [{ messageId: 'noConsoleInHandler' }],
+    },
   ],
 });
