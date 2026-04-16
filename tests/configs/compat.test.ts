@@ -8,6 +8,8 @@ const DEPRECATED_RULE_IDS = [
   'ai-guard/no-redundant-await',
   'ai-guard/no-broad-exception',
   'ai-guard/no-catch-without-use',
+  'ai-guard/require-auth-middleware',
+  'ai-guard/require-authz-check',
 ] as const;
 
 describe('configs/compat', () => {
@@ -46,13 +48,15 @@ describe('configs/compat', () => {
 });
 
 describe('deprecated rules', () => {
-  it('mark all 5 rules as deprecated in their meta', () => {
+  it('mark all 7 rules as deprecated in their meta', () => {
     const ruleNames = [
       'no-await-in-loop',
       'no-async-without-await',
       'no-redundant-await',
       'no-broad-exception',
       'no-catch-without-use',
+      'require-auth-middleware',
+      'require-authz-check',
     ] as const;
 
     for (const name of ruleNames) {
@@ -72,6 +76,8 @@ describe('deprecated rules', () => {
       'no-redundant-await',
       'no-broad-exception',
       'no-catch-without-use',
+      'require-auth-middleware',
+      'require-authz-check',
     ] as const;
     for (const name of ruleNames) {
       const rule = plugin.rules[name] as { create: unknown };
@@ -85,6 +91,8 @@ describe('deprecated rules', () => {
     ['no-redundant-await', 'redundantAwait'],
     ['no-broad-exception', 'broadException'],
     ['no-catch-without-use', 'unusedCatchParam'],
+    ['require-auth-middleware', 'missingAuth'],
+    ['require-authz-check', 'missingAuthz'],
   ] as const)(
     'rule %s includes `[ai-guard deprecated` prefix in message id `%s`',
     (ruleName, messageId) => {
@@ -103,6 +111,8 @@ describe('deprecated rules', () => {
     ['no-redundant-await', ['@typescript-eslint/return-await']],
     ['no-broad-exception', ['@typescript-eslint/no-explicit-any']],
     ['no-catch-without-use', ['@typescript-eslint/no-unused-vars']],
+    ['require-auth-middleware', ['require-framework-auth']],
+    ['require-authz-check', ['require-framework-authz']],
   ] as const)(
     'rule %s declares a non-empty replacedBy meta pointing at verified upstream rule(s)',
     (ruleName, expected) => {

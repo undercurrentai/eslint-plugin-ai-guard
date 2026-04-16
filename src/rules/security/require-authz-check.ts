@@ -201,6 +201,8 @@ export const requireAuthzCheck = createRule({
   name: 'require-authz-check',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['require-framework-authz'],
     docs: {
       description:
         'Require a visible authorization/ownership check when route handlers access resource identifiers (e.g., req.params.id). AI tools often add auth middleware but forget per-resource authorization checks.',
@@ -209,7 +211,7 @@ export const requireAuthzCheck = createRule({
     schema: [],
     messages: {
       missingAuthz:
-        'Potential missing authorization check. This handler uses resource identifiers (like req.params.id) but no visible ownership/authorization guard was found. AI tools frequently miss authz after auth.',
+        '[ai-guard deprecated — use require-framework-authz] Potential missing authorization check. This handler uses resource identifiers (like req.params.id) but no visible ownership/authorization guard was found.',
     },
   },
   defaultOptions: [],

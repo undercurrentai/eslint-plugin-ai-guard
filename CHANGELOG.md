@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/). The `@undercurrent` fork uses a 2.x lineage independent from the upstream `eslint-plugin-ai-guard` 1.x line.
 
+## [2.0.0-beta.2] — 2026-04-15
+
+Framework-aware auth/authz/webhook-signature trio. The first framework-deep release.
+
+### ⚠️  BREAKING
+
+- **2 rules deprecated** (removed in v3.0.0). Replaced by framework-aware versions:
+  - `ai-guard/require-auth-middleware` → `ai-guard/require-framework-auth`
+  - `ai-guard/require-authz-check` → `ai-guard/require-framework-authz`
+- **`/webhook` is no longer a public-route default.** Webhook routes must now either pass an auth check or pass signature verification (handled by the new `require-webhook-signature` rule). This was a known defect in v1: `require-auth-middleware` exempted `/webhook*` paths, but Stripe/GitHub/Slack webhooks need cryptographic signature verification, not auth.
+- **Presets updated.** `recommended`, `strict`, and `security` now use the new framework-aware rules. The 2 deprecated rules continue to emit with `[ai-guard deprecated — use X]` prefix.
+
+### Added
+
+- **`require-framework-auth`** — detects missing authentication on routes across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. Options: `knownAuthCallers`, `publicRoutePatterns`, `skipDecorators`, `assumeGlobalAuth`, `mutatingOnly`. See [`docs/rules/require-framework-auth.md`](./docs/rules/require-framework-auth.md).
+- **`require-framework-authz`** — detects missing authorization checks. Adds support for CASL (`ability.can`), Casbin (`enforcer.enforce`), Cerbos (`cerbos.checkResource`), and Permit.io (`permit.check`) via import-verified detection. See [`docs/rules/require-framework-authz.md`](./docs/rules/require-framework-authz.md).
+- **`require-webhook-signature`** — detects webhook handlers without cryptographic signature verification. Recognizes Stripe (`constructEvent`), GitHub (`crypto.timingSafeEqual`), Svix (`Webhook.verify`), Slack (`createSlackEventAdapter`), and configurable patterns. See [`docs/rules/require-webhook-signature.md`](./docs/rules/require-webhook-signature.md).
+- **`framework` preset** — `aiGuard.configs.framework` enables the trio at error/warn/error.
+- **`compat` preset extended** to include `require-auth-middleware: 'off'` and `require-authz-check: 'off'`.
+- **Framework support guide** at [`docs/guides/framework-support.md`](./docs/guides/framework-support.md).
+- **Shared framework detector infrastructure** at `src/utils/framework-detectors.ts` — pure-AST import map and decorator helpers, reused by all three new rules. No `project: true` or type-aware linting required.
+- **155 new tests** (5 integration tests + 3 rule tests + detector tests).
+
+### Changed
+
+- Plugin version bumped to `2.0.0-beta.2`.
+- CLI rule maps (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) updated to reference the new rules.
+
 ## [2.0.0-beta.1] — 2026-04-15
 
 First beta of the `@undercurrent/eslint-plugin-ai-guard` fork. Diverges from upstream `YashJadhav21/eslint-plugin-ai-guard@1.1.11`.

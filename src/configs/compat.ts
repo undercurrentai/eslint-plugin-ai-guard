@@ -31,6 +31,8 @@ const compat: TSESLint.ClassicConfig.Config = {
     'ai-guard/no-redundant-await': 'off',
     'ai-guard/no-broad-exception': 'off',
     'ai-guard/no-catch-without-use': 'off',
+    'ai-guard/require-auth-middleware': 'off',
+    'ai-guard/require-authz-check': 'off',
   },
 };
 

@@ -113,9 +113,59 @@ You should see the same rule IDs fire as before (minus the 5 deprecated rules). 
 
 If finding counts diverge significantly, please open an issue with before/after counts at [undercurrentai/eslint-plugin-ai-guard](https://github.com/undercurrentai/eslint-plugin-ai-guard/issues/new) — we track regressions closely via the downstream canary workflow.
 
+## v2.0.0-beta.2 — Framework-aware auth/authz/webhook trio
+
+The second beta replaces 2 more rules with framework-aware versions and adds webhook signature detection.
+
+### Newly deprecated (in v2.0.0-beta.2)
+
+| Old (deprecated) | New (replacement) |
+|---|---|
+| `ai-guard/require-auth-middleware` | `ai-guard/require-framework-auth` |
+| `ai-guard/require-authz-check` | `ai-guard/require-framework-authz` |
+
+The new rules support Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. They detect:
+- Express/Fastify/Hono variadic middleware + blanket `app.use()` / `addHook` patterns
+- NestJS `@UseGuards` on method or class, with skip decorators (`@Public`, `@SkipAuth`)
+- Next.js exported handlers (`POST`, `PUT`, `PATCH`, `DELETE`) requiring an auth call (`auth()`, `getServerSession()`, etc.)
+
+The new authz rule additionally recognizes CASL, Casbin, Cerbos, and Permit.io patterns when the corresponding library is imported.
+
+### New rule: `require-webhook-signature`
+
+Detects unverified webhook handlers. Recognizes Stripe `constructEvent`, GitHub `crypto.timingSafeEqual`, Svix `Webhook.verify`, and Slack `createSlackEventAdapter`.
+
+**Important behavior change:** `/webhook` is no longer a public-route default. Webhook routes must now either:
+- Pass an authentication check (rare for external webhooks), OR
+- Pass signature verification via `require-webhook-signature`
+
+### Migration
+
+If you opted into either deprecated rule explicitly, swap the rule IDs:
+
+```diff
+ rules: {
+-  'ai-guard/require-auth-middleware': 'error',
+-  'ai-guard/require-authz-check': 'warn',
++  'ai-guard/require-framework-auth': 'error',
++  'ai-guard/require-framework-authz': 'warn',
++  'ai-guard/require-webhook-signature': 'error',
+ }
+```
+
+If you cannot move yet (e.g., heavy reliance on the legacy detection semantics), add the deprecated rules to the `compat` preset's off list — they ship as `'off'` automatically when you spread `aiGuard.configs.compat.rules`.
+
+### Cross-file limitations
+
+The framework-aware rules analyze a single file at a time. They cannot detect:
+
+- NestJS `APP_GUARD` registered in a separate `*.module.ts` provider list
+- Next.js `middleware.ts` providing blanket auth via `clerkMiddleware()` or `withAuth()`
+
+If your project relies on either pattern, set `assumeGlobalAuth: true` in the rule options. See [`docs/guides/framework-support.md`](../guides/framework-support.md).
+
 ## What's coming in later v2.x betas
 
-- **v2.0.0-beta.2** — framework-aware auth/authz/webhook-signature rules for Express 5, Fastify 4/5, NestJS 10/11, Next.js 14/15 App Router, Hono 4. Replaces the generic `require-auth-middleware` and `require-authz-check` with framework-pinned detection.
 - **v2.0.0-beta.3** — layered secret detection (provider regex → name heuristic → entropy with split base64/hex thresholds).
 - **v2.0.0-beta.4** — `.ai-guard/policy.yaml` compiler emitting ESLint config, semgrep subset, SARIF 2.1.0, and 8-agent instruction files (Claude Code, Cursor, Copilot, Continue, Aider, Windsurf, Zed, JetBrains AI).
 - **v2.1.0** — narrowed single-function taint MVP replacing `no-unsafe-deserialize`.

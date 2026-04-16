@@ -13,6 +13,9 @@ import { noSqlStringConcat } from './security/no-sql-string-concat';
 import { noUnsafeDeserialize } from './security/no-unsafe-deserialize';
 import { requireAuthMiddleware } from './security/require-auth-middleware';
 import { requireAuthzCheck } from './security/require-authz-check';
+import { requireFrameworkAuth } from './security/require-framework-auth';
+import { requireFrameworkAuthz } from './security/require-framework-authz';
+import { requireWebhookSignature } from './security/require-webhook-signature';
 import { noConsoleInHandler } from './quality/no-console-in-handler';
 import { noDuplicateLogicBlock } from './logic/no-duplicate-logic-block';
 
@@ -36,6 +39,9 @@ export const allRules = {
   'no-unsafe-deserialize': noUnsafeDeserialize,
   'require-auth-middleware': requireAuthMiddleware,
   'require-authz-check': requireAuthzCheck,
+  'require-framework-auth': requireFrameworkAuth,
+  'require-framework-authz': requireFrameworkAuthz,
+  'require-webhook-signature': requireWebhookSignature,
   'no-console-in-handler': noConsoleInHandler,
   'no-duplicate-logic-block': noDuplicateLogicBlock,
 } as const;

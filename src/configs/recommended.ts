@@ -19,7 +19,7 @@ const recommended: TSESLint.ClassicConfig.Config = {
     'ai-guard/no-eval-dynamic': 'error',
 
     // Important but noisier/context-dependent (warn): useful guidance without blocking.
-    'ai-guard/require-auth-middleware': 'warn',
+    'ai-guard/require-framework-auth': 'warn',
     'ai-guard/no-sql-string-concat': 'warn',
 
     // Kept as warn in recommended to reduce false positives in mixed codebases.
@@ -29,7 +29,8 @@ const recommended: TSESLint.ClassicConfig.Config = {
     'ai-guard/no-console-in-handler': 'off',
     'ai-guard/no-unsafe-deserialize': 'warn',
     'ai-guard/no-catch-log-rethrow': 'off',
-    'ai-guard/require-authz-check': 'warn',
+    'ai-guard/require-framework-authz': 'warn',
+    'ai-guard/require-webhook-signature': 'warn',
     'ai-guard/no-duplicate-logic-block': 'off',
   },
 };
