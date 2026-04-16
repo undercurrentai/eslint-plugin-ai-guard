@@ -74,7 +74,7 @@ function normalizePlugin(raw: unknown): AiGuardPlugin {
 // no-broad-exception, no-catch-without-use) are intentionally absent — they
 // remain available via explicit rule-level configuration but are no longer
 // enabled by the CLI's zero-config run.
-const RECOMMENDED_RULES: Record<string, RuleLevel> = {
+export const RECOMMENDED_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-empty-catch': 'error',
   'ai-guard/no-floating-promise': 'error',
   'ai-guard/no-hardcoded-secret': 'error',
@@ -87,7 +87,7 @@ const RECOMMENDED_RULES: Record<string, RuleLevel> = {
   'ai-guard/require-webhook-signature': 'warn',
 };
 
-const STRICT_RULES: Record<string, RuleLevel> = {
+export const STRICT_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-empty-catch': 'error',
   'ai-guard/no-catch-log-rethrow': 'error',
   'ai-guard/no-async-array-callback': 'error',
@@ -103,7 +103,7 @@ const STRICT_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-duplicate-logic-block': 'error',
 };
 
-const SECURITY_RULES: Record<string, RuleLevel> = {
+export const SECURITY_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-hardcoded-secret': 'error',
   'ai-guard/no-eval-dynamic': 'error',
   'ai-guard/no-sql-string-concat': 'error',
