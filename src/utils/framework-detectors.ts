@@ -256,6 +256,7 @@ export function safeCompileRegex(pattern: string, maxLength = 200): RegExp | nul
 /**
  * Unwrap TS-only wrapper nodes that don't change runtime semantics:
  * - `(x as Foo)` — TSAsExpression
+ * - `<Foo>x` — TSTypeAssertion
  * - `x!` — TSNonNullExpression
  * - `x satisfies Foo` — TSSatisfiesExpression
  *
@@ -266,6 +267,7 @@ export function unwrapTSExpression(node: TSESTree.Node): TSESTree.Node {
   let current: TSESTree.Node = node;
   while (
     current.type === AST_NODE_TYPES.TSAsExpression ||
+    current.type === AST_NODE_TYPES.TSTypeAssertion ||
     current.type === AST_NODE_TYPES.TSNonNullExpression ||
     current.type === AST_NODE_TYPES.TSSatisfiesExpression
   ) {

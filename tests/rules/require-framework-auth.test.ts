@@ -664,6 +664,14 @@ ruleTester.run('require-framework-auth (audit — TS expressions)', requireFrame
       `,
       errors: [{ messageId: 'missingAuth' }],
     },
+    {
+      code: `
+        import express from 'express';
+        const app = express();
+        (<any>app).post('/items', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
   ],
 });
 
