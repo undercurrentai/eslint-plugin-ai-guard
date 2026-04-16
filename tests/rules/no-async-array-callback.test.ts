@@ -84,6 +84,13 @@ ruleTester.run('no-async-array-callback', noAsyncArrayCallback, {
         await Promise.race(requests);
       `,
     },
+    // 16. Identifier callback that is sync
+    {
+      code: `
+        function normalize(item) { return item.trim(); }
+        const cleaned = arr.map(normalize);
+      `,
+    },
   ],
   invalid: [
     // 1. async arrow in map
@@ -160,6 +167,17 @@ ruleTester.run('no-async-array-callback', noAsyncArrayCallback, {
         function buildCards(items) {
           return items.map(async (item) => renderCard(item));
         }
+      `,
+      errors: [{ messageId: 'asyncArrayCallback', data: { method: 'map' } }],
+    },
+    // 15. async callback passed by identifier should be flagged
+    {
+      code: `
+        async function fetchValue(item) {
+          return load(item);
+        }
+
+        const results = arr.map(fetchValue);
       `,
       errors: [{ messageId: 'asyncArrayCallback', data: { method: 'map' } }],
     },
