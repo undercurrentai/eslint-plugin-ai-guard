@@ -46,7 +46,7 @@ describe('integration: express app sample', () => {
 
     expect(ruleIds).toContain('ai-guard/no-empty-catch');
     expect(ruleIds).toContain('ai-guard/no-console-in-handler');
-    expect(ruleIds).toContain('ai-guard/require-authz-check');
+    expect(ruleIds).toContain('ai-guard/require-framework-authz');
 
     // v2.0: `no-await-in-loop` is deprecated and no longer in the strict preset.
     // Users who want it must opt in explicitly (see the follow-up test).

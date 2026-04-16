@@ -1,6 +1,6 @@
 {
   "name": "@undercurrent/eslint-plugin-ai-guard",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "Framework-deep, AI-risk-focused ESLint policy layer for agent-written JS/TS application code. Fork of eslint-plugin-ai-guard.",
   "publishConfig": {
     "access": "public"

@@ -4,6 +4,74 @@ All notable changes to this package will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/). The `@undercurrent` fork uses a 2.x lineage independent from the upstream `eslint-plugin-ai-guard` 1.x line.
 
+## [2.0.0-beta.2] — 2026-04-15
+
+Framework-aware auth/authz/webhook-signature trio. The first framework-deep release.
+
+### ⚠️  BREAKING
+
+- **2 rules deprecated** (removed in v3.0.0). Replaced by framework-aware versions:
+  - `ai-guard/require-auth-middleware` → `ai-guard/require-framework-auth`
+  - `ai-guard/require-authz-check` → `ai-guard/require-framework-authz`
+- **`/webhook*` is no longer a public-route default** — the default `publicRoutePatterns` in `require-framework-auth` no longer exempts webhook paths. Webhook routes must now either pass an auth check or pass signature verification (handled by the new `require-webhook-signature` rule). This was a known defect in v1: `require-auth-middleware` exempted `/webhook*` paths, but Stripe/GitHub/Slack webhooks need cryptographic signature verification, not auth.
+- **Tightened public-route boundaries.** Default patterns like `/^\/auth/` are now anchored with `(\/|$)` so `/authentication-token`, `/registry/items`, and `/resetpassword/admin` are no longer accidentally exempted.
+- **Presets updated.** `recommended`, `strict`, and `security` now use the new framework-aware rules. The 2 deprecated rules continue to emit with `[ai-guard deprecated — use X]` prefix.
+
+### Added
+
+- **`require-framework-auth`** — detects missing authentication on routes across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. Options: `knownAuthCallers`, `publicRoutePatterns`, `skipDecorators`, `assumeGlobalAuth`, `mutatingOnly`. See [`docs/rules/require-framework-auth.md`](./docs/rules/require-framework-auth.md).
+- **`require-framework-authz`** — detects missing authorization checks. Adds support for CASL (`ability.can`), Casbin (`enforcer.enforce`), Cerbos (`cerbos.checkResource`), and Permit.io (`permit.check`) via import-verified detection. See [`docs/rules/require-framework-authz.md`](./docs/rules/require-framework-authz.md).
+- **`require-webhook-signature`** — detects webhook handlers without cryptographic signature verification. Recognizes Stripe (`constructEvent`), GitHub (`crypto.timingSafeEqual`), Svix (`Webhook.verify`), Slack (`createSlackEventAdapter`), and configurable patterns. See [`docs/rules/require-webhook-signature.md`](./docs/rules/require-webhook-signature.md).
+- **`framework` preset** — `aiGuard.configs.framework` enables the trio at error/warn/error.
+- **`compat` preset extended** to include `require-auth-middleware: 'off'` and `require-authz-check: 'off'`.
+- **Framework support guide** at [`docs/guides/framework-support.md`](./docs/guides/framework-support.md).
+- **Shared framework detector infrastructure** at `src/utils/framework-detectors.ts` — pure-AST import map and decorator helpers, reused by all three new rules. No `project: true` or type-aware linting required.
+- **155 new tests** (5 integration tests + 3 rule tests + detector tests).
+
+### Changed
+
+- Plugin version bumped to `2.0.0-beta.2`.
+- CLI rule maps (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) updated to reference the new rules.
+
+### Fixed
+
+17 correctness fixes applied during the audit, ultrathink, and bug-hunt phases, each covered by regression tests.
+
+**Initial audit (8):**
+
+- Decorator detection now handles member-expression form (`@Common.UseGuards()`) — previously silently skipped NestJS methods using barrel-imported decorators.
+- `isRouteDefinition` now unwraps `TSAsExpression` / `TSNonNullExpression` / `TSSatisfiesExpression` — previously `(app as Application).get(...)` was not detected.
+- Express chained `.route('/x').post(auth, handler)` form now handled correctly — previously misread the auth middleware as the path.
+- Hono multi-method `app.on(['POST','PUT'], path, handler)` form now detected.
+- NestJS static methods on `@Controller` classes are now skipped (they're not HTTP-dispatched).
+- `require-framework-authz` now detects destructured `const { id } = req.params` patterns and supports Fastify's `request.` prefix (not just Express's `req.`).
+- AST walkers skip nested `FunctionDeclaration` bodies to avoid false-negatives from dead-code authz/verification calls in never-invoked helpers.
+- Top-level `app/route.ts` (App Router root catch-all) now correctly detected as a Next.js route handler.
+
+**Bug-hunt round 1 (5):**
+
+- Express `.route('/x').post(...).get(...)` chain reuse now correctly walks back through chained HTTP methods to find the originating `.route()` and inherits its path. Previously the second `.METHOD()` saw middleware as path (false positive) or skipped the chain (false negative).
+- Concise-arrow Next.js handlers (`export const POST = (req) => doX()`) are now detected. Previously the rule required `init.body.type === BlockStatement`, silently skipping concise arrows.
+- `require-webhook-signature` lenient fallback now also accepts `MemberExpression` (`obj.wh.verify()`) and `ThisExpression` (`this.wh.verify()`) receivers — common in class-based webhook handlers.
+- `require-webhook-signature` no longer fires on test-fixture file paths (`__tests__/`, `.test.`, `.spec.`, `tests/`, `fixtures/`, `mocks/`, `__mocks__/`).
+- `require-framework-authz` destructuring now handles aliased (`{ id: userId }`), computed-string (`{ ['id']: id }`), and default-value (`{ id = 'x' }`) patterns by checking BOTH source key AND binding name.
+
+**Bug-hunt rounds 2-3 (2):**
+
+- `unwrapTSExpression` now also unwraps the legacy `TSTypeAssertion` form (`<any>app`). Previously angle-bracket type assertions silently bypassed `isRouteDefinition`.
+- Mixed-method Hono arrays (`app.on(['GET', dynamicMethod], path, h)`) under `mutatingOnly: true` now treat dynamic elements as potentially mutating (fail-closed). Previously non-literal array elements were silently ignored.
+
+**Ultrathink cycle 2 (2 — security-critical):**
+
+- **SECURITY**: `isLocalFromWebhookLib` lenient fallback no longer accepts ANY identifier when svix/octokit is imported. Now requires receiver names to suggest webhook bindings (`wh`, `webhook(s)`, `hook`, `svix`, `octokit`, or `*webhook(s)` suffix). Previously `jwt.verify(token, SECRET)` in a webhook handler file silently passed signature verification when svix happened to be imported elsewhere — closing a real exploit path.
+- Empty Hono method arrays (`app.on([], path, h)`) no longer produce a misleading `<dynamic>` false-positive report — empty arrays are dead code (no dispatch).
+
+### Internal
+
+- Removed inherited-from-upstream dead utility file `src/utils/ast-helpers.ts` (0 callers).
+- Removed unused exports `hasImportFrom` and `isMemberCallTo` from `src/utils/framework-detectors.ts`.
+- `bodyContainsCallTo` widened from `BlockStatement` to `Node` to support concise-arrow Next.js handler walking.
+
 ## [2.0.0-beta.1] — 2026-04-15
 
 First beta of the `@undercurrent/eslint-plugin-ai-guard` fork. Diverges from upstream `YashJadhav21/eslint-plugin-ai-guard@1.1.11`.

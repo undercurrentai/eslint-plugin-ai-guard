@@ -3,6 +3,7 @@ import recommended from './configs/recommended';
 import strict from './configs/strict';
 import security from './configs/security';
 import compat from './configs/compat';
+import framework from './configs/framework';
 
 // NOTE: only a single default export. Named exports mix poorly with `tsup`'s
 // `cjsInterop: true`, which is how we keep CJS consumers reading the plugin
@@ -11,7 +12,7 @@ import compat from './configs/compat';
 const plugin = {
   meta: {
     name: '@undercurrent/eslint-plugin-ai-guard',
-    version: '2.0.0-beta.1',
+    version: '2.0.0-beta.2',
   },
   rules: allRules,
   configs: {
@@ -19,6 +20,7 @@ const plugin = {
     strict,
     security,
     compat,
+    framework,
   },
 };
 

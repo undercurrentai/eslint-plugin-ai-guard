@@ -9,8 +9,9 @@ const security: TSESLint.ClassicConfig.Config = {
     'ai-guard/no-eval-dynamic': 'error',
     'ai-guard/no-sql-string-concat': 'error',
     'ai-guard/no-unsafe-deserialize': 'warn',
-    'ai-guard/require-auth-middleware': 'warn',
-    'ai-guard/require-authz-check': 'warn',
+    'ai-guard/require-framework-auth': 'warn',
+    'ai-guard/require-framework-authz': 'warn',
+    'ai-guard/require-webhook-signature': 'warn',
   },
 };
 

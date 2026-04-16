@@ -76,11 +76,13 @@ ruleTester.run('my-new-rule', myNewRule, { valid: [...], invalid: [...] });
 ### 4. Register and document
 - Add an import + entry in `src/rules/index.ts`.
 - Add the rule at the intended severity in the appropriate preset (`src/configs/{recommended,strict,security}.ts`).
+- Update the CLI rule maps in `cli/utils/eslint-runner.ts` (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) to keep them in sync with the configs.
 - Create `docs/rules/<rule-name>.md` describing intent, examples, and options.
-- Add an entry to `docs/rules.md` and the Vitepress nav if applicable.
+- Add an entry to `docs/rules/README.md` (the canonical category-organized index) — `docs/rules.md` is a stub that should also be kept current.
+- Update the Vitepress nav if applicable.
 
 ### 5. Deprecating a rule
-We use `meta.deprecated: true` + `meta.replacedBy: [...]` on the rule's `meta`, prefix the user-facing message with `[ai-guard deprecated — use <X>]`, and keep the rule code functional for ≥ 2 minor versions before removal in the next major. See the 5 rules deprecated in v2.0.0-beta.1 as reference.
+We use `meta.deprecated: true` + `meta.replacedBy: [...]` on the rule's `meta`, prefix the user-facing message with `[ai-guard deprecated — use <X>]`, and keep the rule code functional for ≥ 2 minor versions before removal in the next major. The deprecated rule must also be added to `src/configs/compat.ts` (off-only) so users can opt out cleanly. See the 5 rules deprecated in v2.0.0-beta.1 and the 2 rules deprecated in v2.0.0-beta.2 as reference.
 
 ## Running tests
 

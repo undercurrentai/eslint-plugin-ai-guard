@@ -66,6 +66,8 @@ export const requireAuthMiddleware = createRule({
   name: 'require-auth-middleware',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['require-framework-auth'],
     docs: {
       description:
         'Require authentication middleware on Express/Fastify route definitions. AI tools frequently generate route handlers without auth middleware, creating unprotected endpoints that expose sensitive data or operations.',
@@ -86,7 +88,7 @@ export const requireAuthMiddleware = createRule({
     ],
     messages: {
       missingAuth:
-        'Route `{{method}} {{path}}` appears to have no authentication middleware. AI tools frequently generate routes without auth checks, creating unprotected endpoints. Add authentication middleware (e.g., `protect`, `authenticate`) to the handler chain.',
+        '[ai-guard deprecated — use require-framework-auth] Route `{{method}} {{path}}` appears to have no authentication middleware. Add authentication middleware (e.g., `protect`, `authenticate`) to the handler chain.',
     },
   },
   defaultOptions: [{}] as [{ authMiddlewareNames?: string[] }],

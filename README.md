@@ -39,7 +39,7 @@ That's it. **Zero configuration required.**
 ## 🤖 Set Up AI Agent Rules
 
 Generate instruction files so Claude Code, Cursor, and GitHub Copilot
-automatically avoid the 17 most common AI-generated anti-patterns:
+automatically avoid the most common AI-generated anti-patterns:
 
 ```bash
 npx ai-guard init-context
@@ -131,10 +131,16 @@ const users = await Promise.all(userIds.map(async (id) => {
   Disallow variable concatenation/interpolation in SQL queries. AI tools frequently generate dangerous code enabling SQL injection.
 - **`ai-guard/no-unsafe-deserialize`** (Warn in `recommended`/`security`, Error in `strict`)
   Disallow `JSON.parse()` on likely untrusted inputs (like `req.body`) without visible validation.
-- **`ai-guard/require-auth-middleware`** (Warn)
-  Enforce authentication middleware on Express/Fastify routes. AI tools frequently generate unprotected endpoints exposing sensitive data.
-- **`ai-guard/require-authz-check`** (Warn in `recommended`/`security`, Error in `strict`)
-  Require visible ownership/authorization checks when handlers access resource identifiers (like `req.params.id`).
+- **`ai-guard/require-framework-auth`** (Warn in `recommended`/`security`, Error in `strict`)
+  Enforce authentication on routes across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. Decorator-aware for NestJS (`@UseGuards`); filename-aware for Next.js (`app/**/route.ts` exported handlers).
+- **`ai-guard/require-framework-authz`** (Warn in `recommended`/`security`, Error in `strict`)
+  Require visible ownership/policy checks when handlers access resource identifiers. Detects CASL, Casbin, Cerbos, and Permit.io patterns when imported.
+- **`ai-guard/require-webhook-signature`** (Warn in `recommended`/`security`, Error in `strict`)
+  Require HMAC signature verification in webhook handlers. Recognizes Stripe, GitHub, Svix, and Slack patterns.
+- **`ai-guard/require-auth-middleware`** *(deprecated — use `require-framework-auth`)*
+  Legacy v1 rule. Continues to emit findings with a `[ai-guard deprecated]` prefix.
+- **`ai-guard/require-authz-check`** *(deprecated — use `require-framework-authz`)*
+  Legacy v1 rule. Continues to emit findings with a `[ai-guard deprecated]` prefix.
 
 ### 🧹 Code Quality
 
@@ -147,6 +153,7 @@ const users = await Promise.all(userIds.map(async (id) => {
 | --- | --- |
 | `recommended` | Adoption-first preset: high-confidence issues as `error`, context-sensitive rules as `warn`/`off` |
 | `strict` | All rules at `error` — for teams that want maximum coverage |
+| `framework` | The 3 framework-aware rules (auth, authz, webhook signature) — drop-in for v2.x users |
 | `security` | Security-only rules: critical issues at `error`, contextual checks at `warn` |
 
 ### Config Examples

@@ -1,6 +1,8 @@
 # Rules Reference
 
-All 17 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by category.
+All 20 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by category.
+Rules marked **deprecated** continue to emit findings (with `[ai-guard deprecated]` prefix)
+and will be removed in v3.0. Use the listed replacement instead.
 
 ---
 
@@ -32,8 +34,11 @@ All 17 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by ca
 | [no-eval-dynamic](no-eval-dynamic.md) | `error` | `error` | `error` | `eval()` or `new Function()` with dynamic content |
 | [no-sql-string-concat](no-sql-string-concat.md) | `warn` | `error` | `error` | SQL queries built with string concatenation |
 | [no-unsafe-deserialize](no-unsafe-deserialize.md) | `warn` | `warn` | `error` | `JSON.parse()` on untrusted input without validation |
-| [require-auth-middleware](require-auth-middleware.md) | `warn` | `warn` | `error` | Express/Fastify routes without auth middleware |
-| [require-authz-check](require-authz-check.md) | `warn` | `warn` | `error` | No ownership check when accessing resources by ID |
+| [require-framework-auth](require-framework-auth.md) | `warn` | `warn` | `error` | Missing auth on Express/Fastify/Hono/NestJS/Next.js routes |
+| [require-framework-authz](require-framework-authz.md) | `warn` | `warn` | `error` | No ownership/policy check (CASL/Casbin/Cerbos/Permit.io aware) |
+| [require-webhook-signature](require-webhook-signature.md) | `warn` | `warn` | `error` | Webhook handler without HMAC signature verification |
+| [require-auth-middleware](require-auth-middleware.md) **deprecated** | `off` (compat) | — | — | → use `require-framework-auth` |
+| [require-authz-check](require-authz-check.md) **deprecated** | `off` (compat) | — | — | → use `require-framework-authz` |
 
 ## 🧹 Code Quality
 
@@ -45,8 +50,10 @@ All 17 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by ca
 
 ## Preset Comparison
 
-| Preset | Use Case | All 17 Rules? |
+| Preset | Use Case | Coverage |
 |---|---|---|
-| `recommended` | Start here — low noise, high-value rules enabled | No — off/warn for noisy rules |
-| `strict` | Maximum enforcement — mature codebase | Yes — all at `error` |
-| `security` | Security audit focus | Security rules only |
+| `recommended` | Start here — low noise, high-value rules enabled | Active rules at warn/error; deprecated rules off |
+| `strict` | Maximum enforcement — mature codebase | All active rules at `error`; deprecated rules off |
+| `security` | Security audit focus | Security rules only (incl. the framework-aware trio) |
+| `framework` | Framework-deep auth/authz/webhook checks only | The 3 new framework-aware rules |
+| `compat` | Disables all 7 deprecated rules in one line | The 5 v1 rules + 2 M2 deprecations |

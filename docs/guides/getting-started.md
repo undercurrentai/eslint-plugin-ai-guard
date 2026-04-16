@@ -29,7 +29,7 @@ This uses the programmatic ESLint API internally — no `eslint.config.mjs`, no 
     • no-floating-promise:     7
     • no-empty-catch:          4
     • no-sql-string-concat:    3
-    • require-auth-middleware: 3
+    • require-framework-auth:  3
 
   ── Top Files ──
 
@@ -45,10 +45,12 @@ This uses the programmatic ESLint API internally — no `eslint.config.mjs`, no 
 npm install --save-dev @undercurrent/eslint-plugin-ai-guard
 ```
 
-> **Peer dependency:** ESLint ≥ 8.0.0 is required. If you don't have it, install it too:
+> **Peer dependency:** ESLint ≥ 9.0.0 (flat config) is required. If you don't have it, install it too:
 > ```bash
 > npm install --save-dev eslint @undercurrent/eslint-plugin-ai-guard
 > ```
+>
+> If your project is still on ESLint 8 legacy config, stay on the upstream package (`eslint-plugin-ai-guard@1.x`) until you can migrate to flat config. See the [migration guide](../migration/v1-to-v2.md).
 
 ---
 
@@ -62,11 +64,11 @@ The CLI can generate or patch your ESLint config automatically:
 npx ai-guard init
 ```
 
-This detects your ESLint version, generates the appropriate config format (flat config for v9, legacy for v8), and adds default ignores for `dist`, `build`, `.next`, and `coverage`.
+This generates a flat config (`eslint.config.mjs`) with default ignores for `dist`, `build`, `.next`, and `coverage`.
 
 ### Option B — Manual configuration
 
-**ESLint v9 — `eslint.config.mjs`:**
+**`eslint.config.mjs` (ESLint 9 flat config):**
 
 ```javascript
 import aiGuard from '@undercurrent/eslint-plugin-ai-guard';
@@ -80,16 +82,6 @@ export default [
     ignores: ['.next/**', 'dist/**', 'build/**', 'coverage/**'],
   },
 ];
-```
-
-**ESLint v8 — `.eslintrc.json`:**
-
-```json
-{
-  "plugins": ["ai-guard"],
-  "extends": ["plugin:ai-guard/recommended"],
-  "ignorePatterns": [".next/", "dist/", "build/", "coverage/"]
-}
 ```
 
 ---
