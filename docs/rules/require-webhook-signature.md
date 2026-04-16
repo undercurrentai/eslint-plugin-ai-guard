@@ -164,6 +164,41 @@ rules: {
 }
 ```
 
+## Lenient `.verify()` fallback (Svix / Octokit class-based handlers)
+
+The Svix and Octokit SDKs are commonly used through stored class fields:
+
+```typescript
+import { Webhook } from 'svix';
+class StripeWebhookHandler {
+  private wh = new Webhook(process.env.SVIX_SECRET!);
+  async handle(req: Request) {
+    this.wh.verify(rawBody, headers);  // ✅ accepted
+    // ...
+  }
+}
+```
+
+The rule cannot trace `this.wh` back to the `new Webhook()` instantiation across method boundaries, so it uses a **binding-name heuristic** to accept these patterns when `svix` or `@octokit/webhooks` is imported in the file. The receiver name (Identifier name, or final property name of a MemberExpression) must match one of:
+
+- `wh`, `webhook`, `webhooks`, `hook`, `svix`, `octokit`
+- Any name ending in `webhook` or `webhooks` (e.g., `myWebhook`, `stripeWebhooks`)
+
+**This means**: in a webhook handler file that imports `svix`, calls like `jwt.verify(token, secret)` or `crypto.verify(...)` are **NOT** accepted as webhook signature verification. The rule will still fire `missingWebhookSig` because `jwt` and `crypto` are not webhook-related receiver names. This was tightened in v2.0.0-beta.2 after a security audit identified the previous lenient behavior as exploitable.
+
+If you use a custom variable name not on the list, either rename it to include `webhook`/`hook`, or add it to `verificationFunctions` to whitelist the specific call.
+
+## Test-file path exemption
+
+The rule will not flag handlers in files whose paths match common test-fixture patterns, since those are typically intentional dummies:
+
+- `__tests__/`, `__mocks__/` directory segments
+- `tests/`, `fixtures/`, `mocks/` directory segments
+- `.test.{ts,tsx,js,jsx,cjs,mjs,cts,mts}` file suffix
+- `.spec.{ts,tsx,js,jsx,cjs,mjs,cts,mts}` file suffix
+
+If you have a real webhook handler under one of these paths (uncommon but possible), the rule will silently skip it. Move the handler to a non-test path or temporarily disable the rule on that file with an `eslint-disable` comment.
+
 ## A note on Stripe and raw bodies
 
 Stripe's `constructEvent(payload, signature, secret)` requires `payload` to be the **raw request body bytes**, not a JSON-parsed object. The most common production bug for Stripe webhooks is registering `app.use(express.json())` globally and then receiving `[object Object]` at the verifier.

@@ -35,7 +35,9 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 
 ### Fixed
 
-8 correctness fixes applied during the audit phase, each covered by regression tests:
+17 correctness fixes applied during the audit, ultrathink, and bug-hunt phases, each covered by regression tests.
+
+**Initial audit (8):**
 
 - Decorator detection now handles member-expression form (`@Common.UseGuards()`) — previously silently skipped NestJS methods using barrel-imported decorators.
 - `isRouteDefinition` now unwraps `TSAsExpression` / `TSNonNullExpression` / `TSSatisfiesExpression` — previously `(app as Application).get(...)` was not detected.
@@ -46,9 +48,29 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 - AST walkers skip nested `FunctionDeclaration` bodies to avoid false-negatives from dead-code authz/verification calls in never-invoked helpers.
 - Top-level `app/route.ts` (App Router root catch-all) now correctly detected as a Next.js route handler.
 
+**Bug-hunt round 1 (5):**
+
+- Express `.route('/x').post(...).get(...)` chain reuse now correctly walks back through chained HTTP methods to find the originating `.route()` and inherits its path. Previously the second `.METHOD()` saw middleware as path (false positive) or skipped the chain (false negative).
+- Concise-arrow Next.js handlers (`export const POST = (req) => doX()`) are now detected. Previously the rule required `init.body.type === BlockStatement`, silently skipping concise arrows.
+- `require-webhook-signature` lenient fallback now also accepts `MemberExpression` (`obj.wh.verify()`) and `ThisExpression` (`this.wh.verify()`) receivers — common in class-based webhook handlers.
+- `require-webhook-signature` no longer fires on test-fixture file paths (`__tests__/`, `.test.`, `.spec.`, `tests/`, `fixtures/`, `mocks/`, `__mocks__/`).
+- `require-framework-authz` destructuring now handles aliased (`{ id: userId }`), computed-string (`{ ['id']: id }`), and default-value (`{ id = 'x' }`) patterns by checking BOTH source key AND binding name.
+
+**Bug-hunt rounds 2-3 (2):**
+
+- `unwrapTSExpression` now also unwraps the legacy `TSTypeAssertion` form (`<any>app`). Previously angle-bracket type assertions silently bypassed `isRouteDefinition`.
+- Mixed-method Hono arrays (`app.on(['GET', dynamicMethod], path, h)`) under `mutatingOnly: true` now treat dynamic elements as potentially mutating (fail-closed). Previously non-literal array elements were silently ignored.
+
+**Ultrathink cycle 2 (2 — security-critical):**
+
+- **SECURITY**: `isLocalFromWebhookLib` lenient fallback no longer accepts ANY identifier when svix/octokit is imported. Now requires receiver names to suggest webhook bindings (`wh`, `webhook(s)`, `hook`, `svix`, `octokit`, or `*webhook(s)` suffix). Previously `jwt.verify(token, SECRET)` in a webhook handler file silently passed signature verification when svix happened to be imported elsewhere — closing a real exploit path.
+- Empty Hono method arrays (`app.on([], path, h)`) no longer produce a misleading `<dynamic>` false-positive report — empty arrays are dead code (no dispatch).
+
 ### Internal
 
 - Removed inherited-from-upstream dead utility file `src/utils/ast-helpers.ts` (0 callers).
+- Removed unused exports `hasImportFrom` and `isMemberCallTo` from `src/utils/framework-detectors.ts`.
+- `bodyContainsCallTo` widened from `BlockStatement` to `Node` to support concise-arrow Next.js handler walking.
 
 ## [2.0.0-beta.1] — 2026-04-15
 

@@ -164,6 +164,19 @@ The framework-aware rules analyze a single file at a time. They cannot detect:
 
 If your project relies on either pattern, set `assumeGlobalAuth: true` in the rule options. See [`docs/guides/framework-support.md`](../guides/framework-support.md).
 
+### Detection improvements in v2.0.0-beta.2
+
+After M2 shipped, three rounds of audit + bug-hunt added the following detection improvements (full list in [CHANGELOG](../../CHANGELOG.md)):
+
+- **Express** — `router.route('/x').get(...).post(...)` chained-method form correctly inherits the path
+- **Next.js App Router** — `export const POST = req => doX()` concise-arrow exports detected (in addition to function declarations and block-body arrows)
+- **Hono** — `app.on(method | string[], path, ...handlers)` multi-method form detected; mixed dynamic-method arrays under `mutatingOnly: true` fail closed
+- **NestJS** — bare `@Get` decorators (no parens), member-expression decorators (`@Common.Get(...)`), static methods on `@Controller` classes correctly skipped
+- **TypeScript wrappers** — `(app as Application)`, `<Application>app`, `app!`, and `(app satisfies Application)` all unwrapped before route detection
+- **`require-framework-authz`** — destructured request params detected including aliased (`{ id: userId }`), computed-string (`{ ['id']: id }`), and default-value (`{ id = 'x' }`) forms
+- **`require-webhook-signature` (security)** — lenient `.verify()` fallback now requires receiver names to suggest webhook bindings; closed a previously-silent path where `jwt.verify()` in a webhook handler file was accepted as signature verification when svix was imported elsewhere
+- **`require-webhook-signature`** — test-fixture file paths (`__tests__/`, `tests/`, `fixtures/`, `mocks/`, `.test.`, `.spec.`) exempt from webhook-handler detection
+
 ## What's coming in later v2.x betas
 
 - **v2.0.0-beta.3** — layered secret detection (provider regex → name heuristic → entropy with split base64/hex thresholds).

@@ -61,6 +61,14 @@ app.get('/users/:id/profile', authenticate, async (req, res) => {
   const user = await User.findById(req.params.id);
   res.json(user);
 });
+
+// Chained .route('/x').METHOD() form is also supported. The walker climbs
+// the chain to find the originating .route() call and inherits its path,
+// so each .METHOD() is checked independently for auth middleware.
+router.route('/users/:id')
+  .get(authenticate, getUser)
+  .post(authenticate, validate, updateUser)
+  .delete(authenticate, requireAdmin, deleteUser);
 ```
 
 ## Fastify 5
@@ -117,7 +125,16 @@ app.get('/admin/users', requireAuth, async (c) => {
   const users = await db.user.findMany();
   return c.json(users);
 });
+
+// Hono multi-method form (single method or array) — same auth check applies
+app.on('POST', '/items/:id', requireAuth, updateItem);
+app.on(['POST', 'PUT', 'PATCH'], '/items/:id', requireAuth, updateItem);
 ```
+
+> **Hono `app.on()` semantics under `mutatingOnly: true`**: when the methods
+> array contains dynamic elements (e.g., `app.on(['GET', someVar], ...)`), the
+> rule fails closed and treats the route as potentially mutating. Empty method
+> arrays (`app.on([], ...)`) are treated as dead code and skipped.
 
 ## NestJS 11
 
@@ -182,6 +199,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const user = await db.user.findUnique({ where: { id: params.id } });
   return NextResponse.json(user);
 }
+
+// Arrow-function exports — both block-body and concise — are detected
+// equivalently to function declarations.
+export const POST = async (req: NextRequest) => {
+  const session = await auth();
+  if (!session) return new Response('Unauthorized', { status: 401 });
+  return Response.json({ ok: true });
+};
+
+// Even concise-arrow body is walked for auth calls
+export const DELETE = async (req: NextRequest) =>
+  (await auth(), Response.json({ deleted: true }));
 ```
 
 ## Options
@@ -238,3 +267,12 @@ Other limitations:
 - Higher-order middleware factories (`requireAuth({ role: 'admin' })`) are recognized by the **call name**, not the returned function. If you wrap auth in an unusual factory, add the wrapper name to `knownAuthCallers`.
 - Express `router.use(auth)` applied to a router defined in another file is not tracked. Apply `router.use(auth)` in the same file as the routes, or use `assumeGlobalAuth`.
 - Cross-file Fastify `register(authPlugin)` is not tracked. Same workaround.
+
+## TypeScript expression handling
+
+The rule looks through TypeScript-only expression wrappers when identifying the route receiver, so all of these are detected identically to plain `app.get(...)`:
+
+- `(app as Application).get('/x', handler)` — `TSAsExpression`
+- `<Application>app.get('/x', handler)` — `TSTypeAssertion` (legacy angle-bracket form)
+- `app!.get('/x', handler)` — `TSNonNullExpression`
+- `(app satisfies Application).get('/x', handler)` — `TSSatisfiesExpression`

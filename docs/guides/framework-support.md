@@ -34,6 +34,16 @@ npx ai-guard run --debug-framework path/to/file.ts
 
 The rules deliberately do **not** read your `package.json` to choose a framework. A monorepo with one Express service and one Fastify service would lint both correctly, file by file, because each file's imports tell the truth. A `package.json`-based heuristic would either pick one or require complex per-package config.
 
+## Handler forms supported
+
+Beyond the canonical `app.METHOD(path, ...handlers)` shape, the rules also recognize:
+
+- **Express** — `router.route('/x').get(...).post(...)` chained-method form (path inherited from `.route()`)
+- **Hono** — multi-method `app.on('GET' | string[], path, ...handlers)` form, including arrays like `['POST', 'PUT']`
+- **NestJS** — bare `@Get` decorators (no parens), member-expression decorators (`@Common.Get(...)`), and skip-decorators (`@Public()`, `@SkipAuth()`, `@AllowAnonymous()`, `@NoAuth()`)
+- **Next.js App Router** — both `export async function POST(req)` declarations AND `export const POST = (req) => ...` arrow exports (block-body and concise-body forms equivalent)
+- **TypeScript wrappers** — `(app as Application).get(...)`, `<Application>app.get(...)`, `app!.get(...)`, `(app satisfies Application).get(...)` are all unwrapped
+
 ## The `compat` preset for v1 migrations
 
 If you're upgrading from v1.x and want a one-line opt-out of the deprecated rules, use the `compat` preset. The framework-aware rules are **off by default** in `compat` so you can adopt them on your own schedule:

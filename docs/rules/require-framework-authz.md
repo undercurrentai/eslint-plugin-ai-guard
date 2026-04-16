@@ -134,6 +134,26 @@ rules: {
 }
 ```
 
+### Destructured request parameters
+
+The rule recognizes resource-ID extraction whether you read directly from the request or destructure first:
+
+```typescript
+// All of these trigger the BOLA check (and require an authz call):
+router.get('/users/:id', (req, res) => {
+  const x = req.params.id;          // direct member access
+  const { id } = req.params;        // basic destructure
+  const { id: userId } = req.params; // aliased destructure (source key 'id' is id-like)
+  const { foo: id } = req.params;   // aliased — binding 'id' is id-like
+  const { ['id']: id } = req.params; // computed-string destructure
+  const { id = 'default' } = req.params; // default-value destructure
+});
+```
+
+The check runs against BOTH the source key name AND the local binding name, so any field named `id` or ending in `id` (like `userId`, `accountId`, `documentId`) is detected. Fastify's `request.params.X` and `request.body.X` are also recognized.
+
+Nested destructuring like `const { params: { id } } = req` is **not** currently detected — the destructure init must trace directly to `req.params|body|query` (path length 2). This is a known limitation; if you encounter it frequently, file an issue.
+
 ### Policy library detection requires the import
 
 The CASL / Casbin / Cerbos / Permit.io detectors **only activate when the corresponding package is imported in the file under analysis**. The rule does not scan `node_modules`, `package.json`, or other files for indirect usage.
