@@ -223,7 +223,7 @@ ruleTester.run('require-webhook-signature', requireWebhookSignature, {
 
 ruleTester.run('require-webhook-signature (bug-hunt — class-based and member receiver)', requireWebhookSignature, {
   valid: [
-    // svix imported, this.wh.verify(...) — ThisExpression receiver accepted via lenient fallback.
+    // svix imported, this.wh.verify(...) — webhook-named ThisExpression receiver accepted.
     {
       code: `
         import { Webhook } from 'svix';
@@ -238,18 +238,46 @@ ruleTester.run('require-webhook-signature (bug-hunt — class-based and member r
         }
       `,
     },
-    // svix imported, obj.wh.verify(...) — MemberExpression receiver via lenient fallback.
+    // svix imported, services.webhook.verify(...) — webhook-named MemberExpression receiver.
     {
       code: `
         import { Webhook } from 'svix';
-        const services = { wh: new Webhook(process.env.WHSEC) };
+        const services = { webhook: new Webhook(process.env.WHSEC) };
         app.post('/webhook', (req, res) => {
-          services.wh.verify(req.body, req.headers);
+          services.webhook.verify(req.body, req.headers);
           res.sendStatus(200);
         });
       `,
     },
   ],
-  invalid: [],
+  invalid: [
+    // SECURITY REGRESSION (ultrathink F2): when svix is imported, an unrelated
+    // jwt.verify() call should NOT be accepted as webhook signature verification.
+    // Previously the lenient fallback returned true for ANY Identifier when svix
+    // was in the import map.
+    {
+      code: `
+        import { Webhook } from 'svix';
+        import jwt from 'jsonwebtoken';
+        app.post('/webhook', (req, res) => {
+          jwt.verify(req.body.token, SECRET);
+          res.json({});
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // Same: token.verify() with a non-webhook receiver name shouldn't pass
+    // even when octokit is imported.
+    {
+      code: `
+        import { Webhooks } from '@octokit/webhooks';
+        app.post('/webhook', (req, res) => {
+          token.verify(req.body.signature);
+          res.json({});
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+  ],
 });
 

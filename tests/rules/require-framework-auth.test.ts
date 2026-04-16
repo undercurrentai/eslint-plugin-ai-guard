@@ -771,6 +771,21 @@ ruleTester.run('require-framework-auth (audit — Hono app.on)', requireFramewor
   ],
 });
 
+// ultrathink F3: empty-array app.on([], ...) — no methods means no dispatch,
+// rule must not produce a misleading <dynamic> false positive
+ruleTester.run('require-framework-auth (ultrathink — empty Hono method array)', requireFrameworkAuth, {
+  valid: [
+    {
+      code: `
+        import { Hono } from 'hono';
+        const app = new Hono();
+        app.on([], '/dead', handler);
+      `,
+    },
+  ],
+  invalid: [],
+});
+
 ruleTester.run('require-framework-auth (audit — public route boundary)', requireFrameworkAuth, {
   invalid: [
     {

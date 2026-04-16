@@ -285,6 +285,10 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       if (methodArg.type === AST_NODE_TYPES.Literal && typeof methodArg.value === 'string') {
         recordMethod(methodArg.value);
       } else if (methodArg.type === AST_NODE_TYPES.ArrayExpression) {
+        // Empty method array — Hono won't dispatch any request to this handler.
+        // No report (the route is dead code; not a security concern).
+        if (methodArg.elements.length === 0) return;
+
         let hasUnknownMethod = false;
         for (const el of methodArg.elements) {
           if (el && el.type === AST_NODE_TYPES.Literal && typeof el.value === 'string') {
@@ -295,7 +299,7 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
         }
         // Mixed literal + dynamic arrays (e.g., ['GET', someVar]) should not be
         // treated as read-only under mutatingOnly.
-        if (hasUnknownMethod || methodLabel === '') {
+        if (hasUnknownMethod) {
           isMutating = true;
           methodLabel = methodLabel ? `${methodLabel}|<dynamic>` : '<dynamic>';
         }

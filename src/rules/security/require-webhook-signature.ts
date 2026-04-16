@@ -200,21 +200,44 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
           }
         }
       }
-      // Fallback: if either lib is imported in this file, accept untracable
-      // receivers — Identifier (`const wh = new Webhook(secret)`),
-      // MemberExpression (`obj.wh.verify(...)`), or ThisExpression
-      // (`this.wh.verify(...)` in class-based handlers). Intentionally lenient
-      // to avoid false positives on common patterns. Only the file-level import
-      // is required, not the binding chain.
-      // See docs/rules/require-webhook-signature.md for the rationale.
-      if (
-        node.type === AST_NODE_TYPES.Identifier ||
-        node.type === AST_NODE_TYPES.MemberExpression ||
-        node.type === AST_NODE_TYPES.ThisExpression
-      ) {
-        return hasSvix || hasOctokit;
+      // Fallback: when svix/octokit is imported but we can't directly trace
+      // the receiver to it (common with `const wh = new Webhook(secret); wh.verify()`
+      // or `this.wh.verify()`), accept the call ONLY if the receiver name suggests
+      // a webhook binding. This prevents false-NEGATIVES where unrelated libraries
+      // with a `.verify()` method (e.g., jsonwebtoken's `jwt.verify()`) would be
+      // mistakenly accepted as webhook-signature verification just because svix
+      // happens to be imported elsewhere in the file.
+      if (!hasSvix && !hasOctokit) return false;
+
+      // Identifier — accept webhook-named locals (`wh`, `webhook`, `hook`, etc.)
+      if (node.type === AST_NODE_TYPES.Identifier) {
+        return isWebhookBindingName(node.name);
       }
+      // MemberExpression — accept when the immediate property is webhook-named
+      // (e.g., `this.wh.verify`, `services.webhook.verify`)
+      if (
+        node.type === AST_NODE_TYPES.MemberExpression &&
+        node.property.type === AST_NODE_TYPES.Identifier
+      ) {
+        return isWebhookBindingName(node.property.name);
+      }
+      // ThisExpression alone (`this.verify(...)`) — too generic to accept
       return false;
+    }
+
+    function isWebhookBindingName(name: string): boolean {
+      const lower = name.toLowerCase();
+      // Common webhook-binding identifiers. Excludes generic crypto/jwt/token names.
+      return (
+        lower === 'wh' ||
+        lower === 'webhook' ||
+        lower === 'webhooks' ||
+        lower === 'hook' ||
+        lower === 'svix' ||
+        lower === 'octokit' ||
+        lower.endsWith('webhook') ||
+        lower.endsWith('webhooks')
+      );
     }
 
     function buildCallPath(node: TSESTree.MemberExpression): string | null {
