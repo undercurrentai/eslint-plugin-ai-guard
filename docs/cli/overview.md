@@ -54,7 +54,7 @@ npx ai-guard run --path src/api
 # Scan a single file
 npx ai-guard run --path src/api/users.ts
 
-# Strict mode (all 17 rules at error)
+# Strict mode (all active rules at error)
 npx ai-guard run --strict
 
 # Security scan only

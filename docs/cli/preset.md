@@ -22,11 +22,15 @@ ai-guard preset
 
 ## Preset meanings
 
-| Preset | Purpose |
-|---|---|
-| `recommended` | Adoption-first, low-noise defaults |
-| `strict` | All rules at `error` |
-| `security` | Security-focused rules only |
+| Preset | Purpose | Available via |
+|---|---|---|
+| `recommended` | Adoption-first, low-noise defaults | CLI prompt + config |
+| `strict` | All active rules at `error` | CLI prompt + config |
+| `security` | Security-focused rules (incl. framework-aware trio) | CLI prompt + config |
+| `framework` | The 3 framework-aware rules only (auth, authz, webhook signature) | Config only — spread `aiGuard.configs.framework.rules` |
+| `compat` | Disables all 7 deprecated rules | Config only — spread `aiGuard.configs.compat.rules` |
+
+> `framework` and `compat` are config-level presets — they're meant to be composed with the base presets (e.g., `recommended + compat`) rather than selected alone via the CLI. See [framework-support.md](../guides/framework-support.md) and [compat-config.md](../guides/compat-config.md).
 
 ## Example
 

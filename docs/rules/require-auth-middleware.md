@@ -1,6 +1,10 @@
 # require-auth-middleware
 
-**Category:** Security | **Severity:** `warn` (recommended, security), `error` (strict)
+> ⚠️ **Deprecated in v2.0.0-beta.2.** This rule is replaced by [`require-framework-auth`](./require-framework-auth.md), which detects missing authentication across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. This rule continues to emit findings with a `[ai-guard deprecated — use require-framework-auth]` message prefix. **It will be removed in v3.0.0.**
+>
+> To silence just this rule while keeping other ai-guard rules, add the [`compat` preset](../guides/compat-config.md) to your flat config or set it to `'off'` explicitly.
+
+**Category:** Security | **Status:** Deprecated (will be removed in v3.0.0)
 
 ---
 

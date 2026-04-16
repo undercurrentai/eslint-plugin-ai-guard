@@ -109,7 +109,7 @@ v2.x supports **ESLint 9 flat config only**. If you are still on ESLint 8 legacy
 npx ai-guard run --preset=recommended
 ```
 
-You should see the same rule IDs fire as before (minus the 5 deprecated rules). The finding count for the remaining 12 rules should be stable.
+You should see the same rule IDs fire as before (minus the deprecated rules). After M2, the active-rule set is 13 (recommended) — the 3 new framework-aware rules replace `require-auth-middleware` and `require-authz-check` and add `require-webhook-signature`.
 
 If finding counts diverge significantly, please open an issue with before/after counts at [undercurrentai/eslint-plugin-ai-guard](https://github.com/undercurrentai/eslint-plugin-ai-guard/issues/new) — we track regressions closely via the downstream canary workflow.
 

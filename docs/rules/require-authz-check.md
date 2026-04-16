@@ -1,6 +1,10 @@
 # require-authz-check
 
-**Category:** Security | **Severity:** `warn` (recommended, security), `error` (strict)
+> ⚠️ **Deprecated in v2.0.0-beta.2.** This rule is replaced by [`require-framework-authz`](./require-framework-authz.md), which adds CASL, Casbin, Cerbos, and Permit.io detection with import-verified pattern matching. This rule continues to emit findings with a `[ai-guard deprecated — use require-framework-authz]` message prefix. **It will be removed in v3.0.0.**
+>
+> To silence just this rule while keeping other ai-guard rules, add the [`compat` preset](../guides/compat-config.md) to your flat config or set it to `'off'` explicitly.
+
+**Category:** Security | **Status:** Deprecated (will be removed in v3.0.0)
 
 ---
 

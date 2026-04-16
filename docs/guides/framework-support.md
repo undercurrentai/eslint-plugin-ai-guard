@@ -47,7 +47,7 @@ export default [
     plugins: { "ai-guard": aiGuard },
     rules: {
       ...aiGuard.configs.recommended.rules,
-      ...aiGuard.configs.compat.rules, // turns off the 5 deprecated rules
+      ...aiGuard.configs.compat.rules, // turns off the 7 deprecated rules
 
       // Framework-aware rules — opt in when you're ready
       "ai-guard/require-framework-auth": "warn",

@@ -22,5 +22,7 @@ export default [
 ## Presets
 
 - `recommended`: adoption-first, low-noise defaults
-- `strict`: all rules at error
-- `security`: security-only rules
+- `strict`: all active rules at error
+- `security`: security-only rules (incl. framework-aware trio)
+- `framework`: the 3 framework-aware rules only (auth, authz, webhook signature)
+- `compat`: disables all 7 deprecated rules so you can enable replacements cleanly
