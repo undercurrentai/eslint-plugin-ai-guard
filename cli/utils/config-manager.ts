@@ -163,11 +163,8 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
 function findLastImportEnd(src: string): number {
   const lines = src.split('\n');
   let lastImportLine = -1;
-  let charCount = 0;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (/^\s*import\s+/.test(line)) lastImportLine = i;
-    charCount += line.length + 1; // +1 for \n
+    if (/^\s*import\s+/.test(lines[i])) lastImportLine = i;
   }
   if (lastImportLine === -1) return -1;
 
@@ -365,10 +362,6 @@ export function validateFlatConfigText(content: string): string[] {
   if (!contentReferencesPlugin(content) && !content.includes('aiGuard')) {
     problems.push('Plugin import not found — ai-guard plugin may not be referenced');
   }
-  if (!content.trim().endsWith('];') && !content.trim().endsWith('];')) {
-    // minor — not fatal
-  }
-
   // Detect nuke ignore that would prevent any files from being linted
   if (content.includes('"**/*"') || content.includes("'**/*'")) {
     problems.push(

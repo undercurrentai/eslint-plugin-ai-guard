@@ -26,13 +26,11 @@ describe('cli eslint-runner loader edge cases', () => {
     fs.writeFileSync(path.join(tmp, 'sample.js'), 'const x = 1;\n', 'utf8');
     try {
       process.chdir(tmp);
-      // The loader should not reject with a createRequire-related error; it
-      // should either succeed (falling through to dist/src) or reject with
-      // the "not installed" error. Either is fine — the assertion is that
-      // it does NOT throw an early ENOENT on the anchor.
-      await expect(
-        runEslint({ preset: 'recommended', targetPath: 'sample.js' }),
-      ).rejects.not.toThrow(/ENOENT/i);
+      // The loader should not reject with a createRequire-related ENOENT; it
+      // should fall through to the "not installed" error cleanly.
+      const err: unknown = await runEslint({ preset: 'recommended', targetPath: 'sample.js' }).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).not.toMatch(/ENOENT/i);
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tmp, { recursive: true, force: true });

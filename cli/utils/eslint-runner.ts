@@ -168,18 +168,15 @@ async function loadPluginModuleFromCwd(cwd: string): Promise<unknown> {
   // specific file fails (broken package, missing exports target), we let the
   // error propagate rather than silently retrying a different candidate or
   // falling through to a local copy.
-  let firstResolveError: unknown = null;
+  let lastResolveError: unknown = null;
   for (const pkgName of PLUGIN_NAMES) {
     let resolved: string;
     try {
       resolved = requireFromCwd.resolve(pkgName);
     } catch (err) {
-      firstResolveError ??= err;
+      lastResolveError = err;
       continue;
     }
-    // Use createRequire for CJS loading — safer than dynamic import under test
-    // runners (e.g. vite-node) that re-wrap module namespaces. Load from the
-    // resolved path so the module we load is exactly the one we resolved.
     return requireFromCwd(resolved);
   }
 
@@ -200,8 +197,9 @@ async function loadPluginModuleFromCwd(cwd: string): Promise<unknown> {
     }
   }
 
+  const detail = lastResolveError instanceof Error ? ` (${lastResolveError.message})` : '';
   throw new Error(
-    '@undercurrent/eslint-plugin-ai-guard is not installed. Run: npm install --save-dev @undercurrent/eslint-plugin-ai-guard',
+    `@undercurrent/eslint-plugin-ai-guard is not installed${detail}. Run: npm install --save-dev @undercurrent/eslint-plugin-ai-guard`,
   );
 }
 

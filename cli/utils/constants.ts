@@ -15,8 +15,12 @@ export const PLUGIN_NAMES: readonly string[] = [PLUGIN_NAME, LEGACY_PLUGIN_NAME]
 
 /**
  * Check whether a content string references the plugin by either name.
- * Used by CLI detectors that scan user ESLint configs / project files.
+ * Uses quote-boundary matching to avoid false-positives on fork names like
+ * "eslint-plugin-ai-guard-extra" or comments mentioning the old name.
  */
 export function contentReferencesPlugin(content: string): boolean {
-  return content.includes(PLUGIN_NAME) || content.includes(LEGACY_PLUGIN_NAME);
+  return /['"`]@undercurrent\/eslint-plugin-ai-guard['"`]/.test(content) ||
+    /['"`]eslint-plugin-ai-guard['"`]/.test(content) ||
+    content.includes("'ai-guard'") ||
+    content.includes('"ai-guard"');
 }
