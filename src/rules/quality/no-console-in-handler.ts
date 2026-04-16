@@ -132,29 +132,23 @@ export const noConsoleInHandler = createRule({
             continue;
           }
 
-          if (argument.body.type !== AST_NODE_TYPES.BlockStatement) {
-            continue;
-          }
+          traverseForConsoleCalls(argument.body, (callNode) => {
+            const parent = callNode.parent;
+            const canSuggestRemoval = parent?.type === AST_NODE_TYPES.ExpressionStatement;
 
-          for (const statement of argument.body.body) {
-            traverseForConsoleCalls(statement, (callNode) => {
-              const parent = callNode.parent;
-              const canSuggestRemoval = parent?.type === AST_NODE_TYPES.ExpressionStatement;
-
-              context.report({
-                node: callNode,
-                messageId: 'noConsoleInHandler',
-                suggest: canSuggestRemoval
-                  ? [
-                      {
-                        messageId: 'removeConsoleCall',
-                        fix: (fixer) => fixer.remove(parent),
-                      },
-                    ]
-                  : undefined,
-              });
+            context.report({
+              node: callNode,
+              messageId: 'noConsoleInHandler',
+              suggest: canSuggestRemoval
+                ? [
+                    {
+                      messageId: 'removeConsoleCall',
+                      fix: (fixer) => fixer.remove(parent),
+                    },
+                  ]
+                : undefined,
             });
-          }
+          });
         }
       },
     };

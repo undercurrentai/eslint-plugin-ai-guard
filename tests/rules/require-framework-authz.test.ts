@@ -184,6 +184,29 @@ ruleTester.run('require-framework-authz', requireFrameworkAuthz, {
         });
       `,
     },
+    // 18. Ownership check with TS non-null assertion (req.user!.id === req.params.id)
+    // — getMemberPath now unwraps TSNonNullExpression so the comparison is recognized.
+    {
+      code: `
+        app.get('/users/:id', (req, res) => {
+          if (req.user!.id === req.params.id) {
+            return res.json(loadUser(req.params.id));
+          }
+          return res.sendStatus(403);
+        });
+      `,
+    },
+    // 19. Ownership check with TSAsExpression cast ((req.user as User).id)
+    {
+      code: `
+        app.get('/users/:id', (req, res) => {
+          if ((req.user as User).id === req.params.id) {
+            return res.json(loadUser(req.params.id));
+          }
+          return res.sendStatus(403);
+        });
+      `,
+    },
   ],
   invalid: [
     // 1. Route accesses req.params.id with route param but NO authz
@@ -286,6 +309,15 @@ ruleTester.run('require-framework-authz', requireFrameworkAuthz, {
             return res.json(readFile(req.params.id));
           }
         });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+    // 11. Concise-arrow handler reaching req.params.id without authz.
+    // Previously silently skipped because the BlockStatement gate excluded
+    // expression-bodied arrows.
+    {
+      code: `
+        app.get('/users/:id', (req, res) => res.json(loadUser(req.params.id)));
       `,
       errors: [{ messageId: 'missingAuthz' }],
     },

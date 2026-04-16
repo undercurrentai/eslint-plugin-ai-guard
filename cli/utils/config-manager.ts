@@ -251,7 +251,7 @@ export function removeNukeIgnore(existing: string): {
   content: string;
   changed: boolean;
 } {
-  const nukePatterns = [/"?\*\*\/\*"?/g];
+  const nukePatterns = [/^\s*['"]\*\*\/\*['"]\s*,?\s*$/gm];
   const hasNuke =
     existing.includes('"**/*"') || existing.includes("'**/*'");
 
@@ -268,10 +268,12 @@ export function removeNukeIgnore(existing: string): {
       `ignores: ['node_modules/**', '.next/**', 'dist/**', 'build/**', 'coverage/**']`,
     );
 
-  // Safety: if the regex above didn't match (complex multi-line), fall back to
-  // a line-by-line strip of **/* entries
-  for (const re of nukePatterns) {
-    patched = patched.replace(re, '');
+  // Safety: if the regex above didn't match, strip only standalone **/* lines.
+  // This avoids corrupting legitimate globs like "src/**/*" or "**/*.ts".
+  if (patched === existing) {
+    for (const re of nukePatterns) {
+      patched = patched.replace(re, '');
+    }
   }
 
   return { content: patched, changed: patched !== existing };

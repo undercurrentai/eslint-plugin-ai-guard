@@ -11,9 +11,9 @@ and will be removed in v3.0. Use the listed replacement instead.
 | Rule | Recommended | Strict | Description |
 |---|---|---|---|
 | [no-empty-catch](no-empty-catch.md) | `error` | `error` | Empty catch blocks silently discard errors |
-| [no-broad-exception](no-broad-exception.md) | `warn` | `error` | `catch (e: any)` loses all type information |
+| [no-broad-exception](no-broad-exception.md) **deprecated** | `off` | `off` | → `@typescript-eslint/no-explicit-any` + `useUnknownInCatchVariables` |
 | [no-catch-log-rethrow](no-catch-log-rethrow.md) | `off` | `error` | Log-then-rethrow adds noise, no recovery |
-| [no-catch-without-use](no-catch-without-use.md) | `off` | `error` | Catch parameter declared but never used |
+| [no-catch-without-use](no-catch-without-use.md) **deprecated** | `off` | `off` | → `@typescript-eslint/no-unused-vars` with `caughtErrors: 'all'` |
 | [no-duplicate-logic-block](no-duplicate-logic-block.md) | `off` | `error` | Copy-pasted logic blocks that should be extracted |
 
 ## ⏱️ Async Correctness
@@ -22,9 +22,9 @@ and will be removed in v3.0. Use the listed replacement instead.
 |---|---|---|---|
 | [no-floating-promise](no-floating-promise.md) | `error` | `error` | Async call without `await` or `.catch()` |
 | [no-async-array-callback](no-async-array-callback.md) | `warn` | `error` | `array.map(async ...)` returns `Promise[]`, not values |
-| [no-await-in-loop](no-await-in-loop.md) | `warn` | `error` | Sequential `await` in loops — use `Promise.all` |
-| [no-async-without-await](no-async-without-await.md) | `warn` | `error` | `async` function that never uses `await` |
-| [no-redundant-await](no-redundant-await.md) | `off` | `error` | `return await` outside try/catch is redundant |
+| [no-await-in-loop](no-await-in-loop.md) **deprecated** | `off` | `off` | → ESLint core `no-await-in-loop` |
+| [no-async-without-await](no-async-without-await.md) **deprecated** | `off` | `off` | → `@typescript-eslint/require-await` |
+| [no-redundant-await](no-redundant-await.md) **deprecated** | `off` | `off` | → `@typescript-eslint/return-await` |
 
 ## 🛡️ Security
 

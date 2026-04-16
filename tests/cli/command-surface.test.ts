@@ -9,6 +9,21 @@ import {
   generateFlatConfig,
   generateLegacyConfig,
 } from '../../cli/utils/config-manager';
+import {
+  RECOMMENDED_RULES,
+  STRICT_RULES,
+  SECURITY_RULES,
+} from '../../cli/utils/eslint-runner';
+
+const DEPRECATED_RULE_IDS = [
+  'ai-guard/no-broad-exception',
+  'ai-guard/no-catch-without-use',
+  'ai-guard/no-await-in-loop',
+  'ai-guard/no-async-without-await',
+  'ai-guard/no-redundant-await',
+  'ai-guard/require-auth-middleware',
+  'ai-guard/require-authz-check',
+];
 
 describe('cli command surface helpers', () => {
   it('ignore helper injects ignores into flat config when missing', () => {
@@ -62,5 +77,16 @@ describe('cli command surface helpers', () => {
 
     expect(flat).toContain('aiGuard.configs.strict.rules');
     expect(legacy).toContain('plugin:ai-guard/security');
+  });
+
+  // Preset UI (preset command) builds its "Preset Details" list dynamically
+  // from these rule maps — if a deprecated ID leaks back in, the UI will
+  // show a rule the CLI won't actually enforce.
+  it('preset rule maps do not reference deprecated rule IDs', () => {
+    for (const ruleMap of [RECOMMENDED_RULES, STRICT_RULES, SECURITY_RULES]) {
+      for (const deprecatedId of DEPRECATED_RULE_IDS) {
+        expect(Object.keys(ruleMap)).not.toContain(deprecatedId);
+      }
+    }
   });
 });

@@ -71,6 +71,18 @@ ruleTester.run('no-hardcoded-secret', noHardcodedSecret, {
         };
       `,
     },
+    // 12. Identifier name contains "secret" as a substring but is not a secret
+    // (secretary, passwordless, keyboard) — previously the regex had no word
+    // boundaries, so any identifier CONTAINING the substring falsely matched.
+    {
+      code: `const secretary = 'Alice Johnson III';`,
+    },
+    {
+      code: `const passwordless = 'via_magic_link_token';`,
+    },
+    {
+      code: `const keyboard = 'mechanical-split-ergonomic';`,
+    },
   ],
   invalid: [
     // 1. Hardcoded API key

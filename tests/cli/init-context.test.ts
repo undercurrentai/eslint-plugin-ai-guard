@@ -63,6 +63,23 @@ describe('init-context', () => {
       expect(content).toContain('v1.2.3');
       expect(content).toContain('DO NOT EDIT MANUALLY');
     });
+
+    it('does not include deprecated v1 rules or stale 17-rule copy', () => {
+      const content = generateCursorFile('2.0.0', ALL_CATEGORIES);
+
+      expect(content).toContain('13 active');
+      expect(content).not.toContain('17 most common');
+
+      expect(content).not.toContain('Rule: no-broad-exception');
+      expect(content).not.toContain('Rule: no-await-in-loop');
+      expect(content).not.toContain('Rule: no-async-without-await');
+      expect(content).not.toContain('Rule: require-auth-middleware');
+      expect(content).not.toContain('Rule: require-authz-check');
+
+      expect(content).toContain('Rule: require-framework-auth');
+      expect(content).toContain('Rule: require-framework-authz');
+      expect(content).toContain('Rule: require-webhook-signature');
+    });
   });
 
   describe('generateCopilotFile', () => {

@@ -8,9 +8,63 @@ const createRule = ESLintUtils.RuleCreator(
 
 
 /**
- * Variable name patterns that suggest secrets.
+ * Single-token identifier names that suggest a secret (whole token, not substring).
+ * Matched after tokenizing the variable name on camel/Pascal case boundaries and
+ * snake/kebab separators — so `secretary` / `passwordless` / `keyboard` no longer
+ * trigger on their substring overlap with `secret` / `password` / `key`.
  */
-const SECRET_NAME_PATTERN = /(?:secret|password|passwd|api[_-]?key|auth[_-]?token|access[_-]?token|private[_-]?key|client[_-]?secret|jwt[_-]?secret|encryption[_-]?key|signing[_-]?key)/i;
+const SECRET_TOKENS = new Set([
+  'secret',
+  'password',
+  'passwd',
+  'apikey',
+  'authtoken',
+  'accesstoken',
+  'privatekey',
+  'clientsecret',
+  'jwtsecret',
+  'encryptionkey',
+  'signingkey',
+]);
+
+/**
+ * Adjacent-token pairs that together identify a secret — for camel/snake/kebab
+ * forms (`apiKey`, `api_key`, `api-key`, `MY_API_KEY` → tokens `api, key`).
+ */
+const SECRET_TOKEN_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ['api', 'key'],
+  ['auth', 'token'],
+  ['access', 'token'],
+  ['private', 'key'],
+  ['client', 'secret'],
+  ['jwt', 'secret'],
+  ['encryption', 'key'],
+  ['signing', 'key'],
+];
+
+function tokenizeIdentifier(name: string): string[] {
+  return name
+    // camelCase → camel_Case
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    // HTTPServer → HTTP_Server (acronym-to-word boundary)
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1_$2')
+    .split(/[_\-]+/)
+    .map((t) => t.toLowerCase())
+    .filter((t) => t.length > 0);
+}
+
+function isSecretName(name: string): boolean {
+  const tokens = tokenizeIdentifier(name);
+  for (const t of tokens) {
+    if (SECRET_TOKENS.has(t)) return true;
+  }
+  for (let i = 0; i < tokens.length - 1; i++) {
+    for (const [a, b] of SECRET_TOKEN_PAIRS) {
+      if (tokens[i] === a && tokens[i + 1] === b) return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Patterns that are definitely NOT secrets — common false positives.
@@ -63,7 +117,7 @@ export const noHardcodedSecret = createRule({
         const varName = node.id.name;
 
         // Check if variable name suggests a secret
-        if (!SECRET_NAME_PATTERN.test(varName)) return;
+        if (!isSecretName(varName)) return;
 
         // Only flag string literals and template literals with no expressions
         const value = getStringValue(node.init);
@@ -92,7 +146,7 @@ export const noHardcodedSecret = createRule({
         if (node.left.property.type !== AST_NODE_TYPES.Identifier) return;
 
         const propName = node.left.property.name;
-        if (!SECRET_NAME_PATTERN.test(propName)) return;
+        if (!isSecretName(propName)) return;
 
         const value = getStringValue(node.right);
         if (value === null) return;
@@ -116,7 +170,7 @@ export const noHardcodedSecret = createRule({
         if (isRuleMetaMessagesProperty(node)) return;
 
         const propName = node.key.name;
-        if (!SECRET_NAME_PATTERN.test(propName)) return;
+        if (!isSecretName(propName)) return;
 
         const value = getStringValue(node.value as TSESTree.Expression);
         if (value === null) return;

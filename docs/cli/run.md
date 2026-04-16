@@ -69,7 +69,7 @@ ai-guard run --path src --strict --json
     • no-floating-promise:      7
     • no-empty-catch:           4
     • no-sql-string-concat:     3
-    • require-auth-middleware:  3
+    • require-framework-auth:   3
 
   ── Top Files ──
 

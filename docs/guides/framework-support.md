@@ -72,7 +72,7 @@ export default [
 ];
 ```
 
-The two old rules (`require-auth-middleware`, `require-authz-check`) are still **on** in `recommended` for v2.x to avoid breaking existing v1 users who relied on them. They will be **removed in v3.0.0**. See [`docs/migration/v1-to-v2.md`](../migration/v1-to-v2.md) for the full timeline.
+The two old rules (`require-auth-middleware`, `require-authz-check`) are marked `deprecated: true` and are **not enabled by any preset** in v2.x — `recommended`, `strict`, and `security` all reference the framework-aware replacements instead. The `compat` preset explicitly sets them to `off` so users migrating from v1 have a one-line switch. Both rules will be **removed in v3.0.0**. See [`docs/migration/v1-to-v2.md`](../migration/v1-to-v2.md) for the full timeline.
 
 For a config that uses **only** the framework-aware rules and has cleanly retired the deprecated ones:
 

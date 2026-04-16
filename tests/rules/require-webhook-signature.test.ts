@@ -278,6 +278,14 @@ ruleTester.run('require-webhook-signature (bug-hunt — class-based and member r
       `,
       errors: [{ messageId: 'missingWebhookSig' }],
     },
+    // Concise-arrow webhook handler with no verification — previously silently
+    // skipped because the handler-search gated on BlockStatement bodies only.
+    {
+      code: `
+        app.post('/webhooks/stripe', (req, res) => res.status(200).end());
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
   ],
 });
 

@@ -14,6 +14,11 @@ import {
   generateLegacyConfig,
   type Preset,
 } from '../utils/config-manager.js';
+import {
+  RECOMMENDED_RULES,
+  STRICT_RULES,
+  SECURITY_RULES,
+} from '../utils/eslint-runner.js';
 import { log } from '../utils/logger.js';
 import path from 'path';
 
@@ -90,31 +95,21 @@ export function registerPresetCommand(program: Command): void {
       log.blank();
       log.section('Preset Details');
 
-      const presetDetails: Record<Preset, Array<{ rule: string; level: string }>> = {
-        recommended: [
-          { rule: 'no-empty-catch', level: chalk.red('error') },
-          { rule: 'no-floating-promise', level: chalk.red('error') },
-          { rule: 'no-hardcoded-secret', level: chalk.red('error') },
-          { rule: 'no-eval-dynamic', level: chalk.red('error') },
-          { rule: 'no-broad-exception', level: chalk.yellow('warn') },
-          { rule: 'no-async-array-callback', level: chalk.yellow('warn') },
-          { rule: 'no-await-in-loop', level: chalk.yellow('warn') },
-          { rule: '+ 5 more…', level: chalk.gray('warn') },
-        ],
-        strict: [
-          { rule: 'All 17 rules', level: chalk.red('error') },
-        ],
-        security: [
-          { rule: 'no-hardcoded-secret', level: chalk.red('error') },
-          { rule: 'no-eval-dynamic', level: chalk.red('error') },
-          { rule: 'no-sql-string-concat', level: chalk.red('error') },
-          { rule: 'no-unsafe-deserialize', level: chalk.yellow('warn') },
-          { rule: 'require-auth-middleware', level: chalk.yellow('warn') },
-          { rule: 'require-authz-check', level: chalk.yellow('warn') },
-        ],
-      };
+      // Build details dynamically from the preset rule maps so this UI stays
+      // in sync with what `ai-guard run` actually enforces.
+      const ruleMap =
+        preset === 'strict'
+          ? STRICT_RULES
+          : preset === 'security'
+            ? SECURITY_RULES
+            : RECOMMENDED_RULES;
 
-      for (const { rule, level } of presetDetails[preset]) {
+      const entries = Object.entries(ruleMap).map(([ruleId, level]) => ({
+        rule: ruleId.replace(/^ai-guard\//, ''),
+        level: level === 'error' ? chalk.red('error') : chalk.yellow('warn'),
+      }));
+
+      for (const { rule, level } of entries) {
         log.print(`    ${chalk.gray('•')} ${chalk.white(rule).padEnd(32)}${level}`);
       }
 

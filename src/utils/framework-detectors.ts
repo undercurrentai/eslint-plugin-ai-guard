@@ -131,16 +131,37 @@ export function getDecoratorCallName(decorator: TSESTree.Decorator): string | nu
 }
 
 export function getMemberPath(node: TSESTree.Node): string[] | null {
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return [node.name];
+  // Unwrap TS-only wrapper expressions (`req!.id`, `(req as Req).id`, `<Req>req.id`,
+  // `req satisfies Req`) so authz/resource-access comparisons in AI-generated TS
+  // code are traced to the underlying member path.
+  const unwrapped = unwrapTSExpression(node);
+  if (unwrapped.type === AST_NODE_TYPES.Identifier) {
+    return [unwrapped.name];
   }
-  if (node.type !== AST_NODE_TYPES.MemberExpression || node.computed) {
+  if (unwrapped.type !== AST_NODE_TYPES.MemberExpression || unwrapped.computed) {
     return null;
   }
-  const objectPath = getMemberPath(node.object);
+  const objectPath = getMemberPath(unwrapped.object);
   if (!objectPath) return null;
-  if (node.property.type !== AST_NODE_TYPES.Identifier) return null;
-  return [...objectPath, node.property.name];
+  if (unwrapped.property.type !== AST_NODE_TYPES.Identifier) return null;
+  return [...objectPath, unwrapped.property.name];
+}
+
+/**
+ * Return the static string key name of an object-literal property.
+ *
+ * Accepts both Identifier keys (`{ foo: bar }`) and string-Literal keys
+ * (`{ 'foo': bar }`) — formatters and generated code commonly emit quoted
+ * keys, and rules that only recognized Identifier shapes produced
+ * false-positives / false-negatives on the quoted form.
+ */
+export function getStaticPropKey(prop: TSESTree.Node): string | null {
+  if (prop.type !== AST_NODE_TYPES.Property) return null;
+  if (prop.key.type === AST_NODE_TYPES.Identifier) return prop.key.name;
+  if (prop.key.type === AST_NODE_TYPES.Literal && typeof prop.key.value === 'string') {
+    return prop.key.value;
+  }
+  return null;
 }
 
 export function getPathString(node: TSESTree.Node): string | null {
@@ -152,7 +173,11 @@ export function getPathString(node: TSESTree.Node): string | null {
       return node.quasis[0].value.cooked ?? null;
     }
     if (node.quasis.length > 0) {
-      return node.quasis[0].value.cooked ?? null;
+      const first = node.quasis[0].value.cooked ?? null;
+      // Dynamic templates such as `/${base}/admin` previously collapsed to `/`
+      // and matched the default public-root pattern, skipping auth checks.
+      if (first === '' || first === '/') return null;
+      return first;
     }
   }
   return null;

@@ -6,6 +6,7 @@ import {
   hasDecoratorNamed,
   getDecoratorCallName,
   getPathString,
+  getStaticPropKey,
   isCallToName,
   bodyContainsCallTo,
   hasImport,
@@ -187,6 +188,22 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       return false;
     }
 
+    function isFastifyRouteReceiver(objNode: TSESTree.Node): boolean {
+      const obj = unwrapTSExpression(objNode);
+      if (obj.type === AST_NODE_TYPES.Identifier) {
+        const name = obj.name.toLowerCase();
+        if (name === 'router' || name === 'app' || name === 'fastify' || name === 'server' || name.includes('router')) {
+          return true;
+        }
+        if (importMap) {
+          const sourceMod = importMap.locals.get(obj.name);
+          if (sourceMod === 'fastify') return true;
+        }
+        return false;
+      }
+      return obj.type === AST_NODE_TYPES.CallExpression;
+    }
+
     function isRouteDefinition(node: TSESTree.CallExpression): boolean {
       if (node.callee.type !== AST_NODE_TYPES.MemberExpression) return false;
       if (node.callee.property.type !== AST_NODE_TYPES.Identifier) return false;
@@ -249,19 +266,21 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
     ): boolean {
       // fastify.METHOD(path, { preHandler: [...] }, handler)
       // or fastify.route({ method, url, preHandler: [...], handler })
+      // Accept both Identifier and string-Literal keys so formatter-quoted
+      // objects `{ 'preHandler': [...] }` are not silently skipped.
       for (const arg of node.arguments) {
         if (arg.type !== AST_NODE_TYPES.ObjectExpression) continue;
         for (const prop of arg.properties) {
-          if (prop.type !== AST_NODE_TYPES.Property) continue;
-          if (prop.key.type !== AST_NODE_TYPES.Identifier) continue;
-          if (prop.key.name !== 'preHandler' && prop.key.name !== 'onRequest') continue;
+          const keyName = getStaticPropKey(prop);
+          if (keyName !== 'preHandler' && keyName !== 'onRequest') continue;
+          const propValue = (prop as TSESTree.Property).value;
 
-          if (prop.value.type === AST_NODE_TYPES.ArrayExpression) {
-            if (prop.value.elements.some((el) => el && isAuthMiddleware(el))) {
+          if (propValue.type === AST_NODE_TYPES.ArrayExpression) {
+            if (propValue.elements.some((el) => el && isAuthMiddleware(el))) {
               return true;
             }
           }
-          if (isAuthMiddleware(prop.value)) return true;
+          if (isAuthMiddleware(propValue)) return true;
         }
       }
       return false;
@@ -418,13 +437,14 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
           let routeMethod = '';
           let routeUrl = '';
           for (const prop of optsArg.properties) {
-            if (prop.type !== AST_NODE_TYPES.Property) continue;
-            if (prop.key.type !== AST_NODE_TYPES.Identifier) continue;
-            if (prop.key.name === 'method' && prop.value.type === AST_NODE_TYPES.Literal) {
-              routeMethod = String(prop.value.value).toUpperCase();
+            const keyName = getStaticPropKey(prop);
+            if (keyName === null) continue;
+            const propValue = (prop as TSESTree.Property).value;
+            if (keyName === 'method' && propValue.type === AST_NODE_TYPES.Literal) {
+              routeMethod = String(propValue.value).toUpperCase();
             }
-            if (prop.key.name === 'url') {
-              routeUrl = getPathString(prop.value) || '<dynamic>';
+            if (keyName === 'url') {
+              routeUrl = getPathString(propValue) || '<dynamic>';
             }
           }
           if (routeUrl && isPublicRoute(routeUrl)) return;
@@ -476,6 +496,21 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
           node.callee.property.name === 'on'
         ) {
           checkHonoOnRoute(node);
+          return;
+        }
+
+        // Fastify options-object form: app.route({ method, url, preHandler, handler }).
+        // isRouteDefinition gates on HTTP_METHODS which excludes 'route', so the
+        // options-object branch of checkFastifyRoute (line "if (method === 'route')")
+        // would otherwise be dead code. Dispatch it explicitly here.
+        if (
+          framework === 'fastify' &&
+          node.callee.type === AST_NODE_TYPES.MemberExpression &&
+          node.callee.property.type === AST_NODE_TYPES.Identifier &&
+          node.callee.property.name === 'route' &&
+          isFastifyRouteReceiver(node.callee.object)
+        ) {
+          checkFastifyRoute(node);
           return;
         }
 
