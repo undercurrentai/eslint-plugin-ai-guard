@@ -152,7 +152,11 @@ export function getPathString(node: TSESTree.Node): string | null {
       return node.quasis[0].value.cooked ?? null;
     }
     if (node.quasis.length > 0) {
-      return node.quasis[0].value.cooked ?? null;
+      const first = node.quasis[0].value.cooked ?? null;
+      // Dynamic templates such as `/${base}/admin` previously collapsed to `/`
+      // and matched the default public-root pattern, skipping auth checks.
+      if (first === '' || first === '/') return null;
+      return first;
     }
   }
   return null;

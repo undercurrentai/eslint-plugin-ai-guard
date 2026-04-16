@@ -100,6 +100,11 @@ ruleTester.run('require-framework-auth (Express)', requireFrameworkAuth, {
       code: `app.put('/settings', updateSettings);`,
       errors: [{ messageId: 'missingAuth' }],
     },
+    // 6. Dynamic template path must not collapse to '/' and be treated as public
+    {
+      code: "const base = 'v1'; app.post(`/${base}/admin`, handler);",
+      errors: [{ messageId: 'missingAuth' }],
+    },
   ],
 });
 
