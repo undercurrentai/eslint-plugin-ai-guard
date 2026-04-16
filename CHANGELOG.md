@@ -66,11 +66,28 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 - **SECURITY**: `isLocalFromWebhookLib` lenient fallback no longer accepts ANY identifier when svix/octokit is imported. Now requires receiver names to suggest webhook bindings (`wh`, `webhook(s)`, `hook`, `svix`, `octokit`, or `*webhook(s)` suffix). Previously `jwt.verify(token, SECRET)` in a webhook handler file silently passed signature verification when svix happened to be imported elsewhere — closing a real exploit path.
 - Empty Hono method arrays (`app.on([], path, h)`) no longer produce a misleading `<dynamic>` false-positive report — empty arrays are dead code (no dispatch).
 
+**Bug-hunt round 3 (7 — hybrid Codex + Claude sweep):**
+
+- **SECURITY**: Template-literal route paths (`` `/${base}/admin` ``) no longer collapse to `/` in `getPathString` and then match the default public-root pattern `/^\/?$/`. Previously any route written as `` `/${...}/...` `` was silently treated as public and auth was never required — a high-impact false negative affecting `require-framework-auth`, `-authz`, and `-webhook-signature` (all three share `getPathString`). Dynamic-template prefixes of `''` or `'/'` now return `null` so callers treat the path as dynamic. Non-ambiguous prefixes like `/webhook/${id}` still extract `/webhook/` for positive detectors.
+- `require-framework-authz` now handles concise-arrow handlers. `app.get('/users/:id', (req, res) => res.json(getUser(req.params.id)))` — a common AI-codegen pattern — was silently skipped because the handler loop gated on `arg.body.type === BlockStatement`. Dropped the gate; walkers already descend arbitrary nodes.
+- `require-framework-authz` now recognizes TS-wrapped ownership operands. `req.user!.id === req.params.id` and `(req.user as User).id === req.params.id` were not detected as ownership checks because `getMemberPath` only descended `Identifier` / `MemberExpression`. `getMemberPath` now unwraps `TSAsExpression` / `TSTypeAssertion` / `TSNonNullExpression` / `TSSatisfiesExpression` at every recursion level — the fix propagates to destructured-param and resource-access detection as well.
+- `require-webhook-signature` now handles concise-arrow handlers. `app.post('/webhooks/stripe', (req, res) => res.status(200).end())` previously bypassed the rule because the handler-search required `BlockStatement` bodies. The walker accepts any body node; absent verification in a single-expression body correctly fires.
+- `require-framework-auth` now dispatches Fastify's `fastify.route({ method, url, handler })` options-object form. `isRouteDefinition` filtered `'route'` out of `HTTP_METHODS`, so the `if (method === 'route')` branch inside `checkFastifyRoute` was unreachable dead code and any `app.route({...})` without `preHandler` went unreported.
+- `require-framework-auth` now recognizes string-literal property keys in option objects (`{ 'preHandler': [auth] }`, `{ 'method': 'POST' }`). Formatter-quoted keys were previously skipped by the `prop.key.type === Identifier` guard. Extracted `getStaticPropKey` into `framework-detectors.ts` for reuse.
+- `no-async-array-callback` now detects async callbacks passed by identifier. `const results = arr.map(fetchValue)` where `fetchValue` is declared `async` was silently ignored because the rule only inspected inline `FunctionExpression`/`ArrowFunctionExpression` args. Added scope-walking identifier resolution (mirroring the existing helper in `no-floating-promise.ts`).
+- `no-floating-promise` now detects optional-call floating promises. `doWork?.()` as a statement is parsed as `ExpressionStatement > ChainExpression > CallExpression`; the rule required `node.expression.type === CallExpression` and silently skipped the `ChainExpression` wrapper. Added `getCallExpression` helper to unwrap both in the main visitor and in `isExpressionHandled` (so `.catch`/`.then`/`.finally` on optional calls still counts as handled).
+- `no-hardcoded-secret` regex `SECRET_NAME_PATTERN` had no word-boundary anchors, so identifiers CONTAINING the substrings (`secretary`, `passwordless`, `keyboard`, `authenticator`) falsely triggered the rule. Since it runs at `error` in the recommended/strict/security presets, this blocked first-run adoption on realistic codebases. Replaced with a tokenizer that splits on camel/Pascal case boundaries + snake/kebab separators and matches whole tokens (or adjacent pairs like `api,key`).
+
 ### Internal
 
 - Removed inherited-from-upstream dead utility file `src/utils/ast-helpers.ts` (0 callers).
 - Removed unused exports `hasImportFrom` and `isMemberCallTo` from `src/utils/framework-detectors.ts`.
 - `bodyContainsCallTo` widened from `BlockStatement` to `Node` to support concise-arrow Next.js handler walking.
+- `getMemberPath` now unwraps TS wrapper expressions (`TSAsExpression`, `TSTypeAssertion`, `TSNonNullExpression`, `TSSatisfiesExpression`) at every recursion level, so authz / resource-access detection tolerates AI-codegen TS annotations across all call sites.
+- `getPathString` returns `null` for template literals whose leading static segment is `''` or `'/'` — dynamic templates are treated as dynamic paths rather than collapsing to the public root.
+- `getStaticPropKey(prop)` — new utility exported from `framework-detectors.ts` that returns the static string key of an object-literal property, accepting both `Identifier` and string-`Literal` forms.
+- `findResourceAccess` / `hasAuthzCall` / `handlerHasVerification` now accept `TSESTree.Node` (widened from `BlockStatement`) to support concise-arrow handler bodies.
+- Test count: 608 → 623 (15 new regression tests for bug-hunt round 3).
 
 ## [2.0.0-beta.1] — 2026-04-15
 
