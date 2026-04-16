@@ -127,7 +127,7 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
       for (const mod of PERMIT_MODULES) { if (hasImport(importMap, mod)) hasPermit = true; }
     }
 
-    function hasAuthzCall(body: TSESTree.BlockStatement): boolean {
+    function hasAuthzCall(body: TSESTree.Node): boolean {
       return walkForAuthz(body, new WeakSet());
     }
 
@@ -185,7 +185,7 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
       return false;
     }
 
-    function findResourceAccess(body: TSESTree.BlockStatement): string | null {
+    function findResourceAccess(body: TSESTree.Node): string | null {
       return walkForResourceAccess(body, new WeakSet());
     }
 
@@ -285,7 +285,8 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
           ) {
             continue;
           }
-          if (arg.body.type !== AST_NODE_TYPES.BlockStatement) continue;
+          // Concise-arrow handlers (e.g., `(req, res) => res.json(getUser(req.params.id))`)
+          // are common in AI-generated code. Walk the expression body instead of skipping.
 
           const resourceAccess = findResourceAccess(arg.body);
           const isSensitive = hasRouteIdParam && resourceAccess !== null;

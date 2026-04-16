@@ -131,16 +131,20 @@ export function getDecoratorCallName(decorator: TSESTree.Decorator): string | nu
 }
 
 export function getMemberPath(node: TSESTree.Node): string[] | null {
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return [node.name];
+  // Unwrap TS-only wrapper expressions (`req!.id`, `(req as Req).id`, `<Req>req.id`,
+  // `req satisfies Req`) so authz/resource-access comparisons in AI-generated TS
+  // code are traced to the underlying member path.
+  const unwrapped = unwrapTSExpression(node);
+  if (unwrapped.type === AST_NODE_TYPES.Identifier) {
+    return [unwrapped.name];
   }
-  if (node.type !== AST_NODE_TYPES.MemberExpression || node.computed) {
+  if (unwrapped.type !== AST_NODE_TYPES.MemberExpression || unwrapped.computed) {
     return null;
   }
-  const objectPath = getMemberPath(node.object);
+  const objectPath = getMemberPath(unwrapped.object);
   if (!objectPath) return null;
-  if (node.property.type !== AST_NODE_TYPES.Identifier) return null;
-  return [...objectPath, node.property.name];
+  if (unwrapped.property.type !== AST_NODE_TYPES.Identifier) return null;
+  return [...objectPath, unwrapped.property.name];
 }
 
 export function getPathString(node: TSESTree.Node): string | null {
