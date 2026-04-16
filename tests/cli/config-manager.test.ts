@@ -4,6 +4,7 @@ import {
   isInvalidAiGuardConfig,
   repairInvalidFlatConfig,
   patchFlatConfig,
+  removeNukeIgnore,
   switchFlatPreset,
   switchLegacyPreset,
 } from '../../cli/utils/config-manager';
@@ -93,5 +94,24 @@ export default [
 
     expect(switched).toContain("'plugin:ai-guard/strict'");
     expect(switched).not.toContain("'plugin:ai-guard/recommended'");
+  });
+
+  it('removes nuke ignores without mutating legitimate file globs', () => {
+    const existing = `
+export default [
+  {
+    ignores: ['**/*'],
+    files: ['src/**/*', '**/*.ts'],
+  },
+];
+`;
+
+    const { content, changed } = removeNukeIgnore(existing);
+
+    expect(changed).toBe(true);
+    expect(content).toContain(
+      "ignores: ['node_modules/**', '.next/**', 'dist/**', 'build/**', 'coverage/**']",
+    );
+    expect(content).toContain("files: ['src/**/*', '**/*.ts']");
   });
 });
