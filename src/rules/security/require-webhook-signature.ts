@@ -123,7 +123,7 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
       return fn.includes('webhook');
     }
 
-    function handlerHasVerification(body: TSESTree.BlockStatement): boolean {
+    function handlerHasVerification(body: TSESTree.Node): boolean {
       return walkForVerification(body, new WeakSet());
     }
 
@@ -277,13 +277,16 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
 
         if (!routeIsWebhook) return;
 
-        // Find the handler function (last function arg)
+        // Find the handler function (last function arg). Accept both
+        // BlockStatement bodies and concise-arrow expression bodies — the
+        // latter is common in AI-codegen and previously bypassed the rule
+        // entirely (e.g., `(req, res) => res.status(200).end()` on a
+        // webhook route silently passed).
         for (let i = args.length - 1; i >= 1; i--) {
           const arg = args[i];
           if (
-            (arg.type === AST_NODE_TYPES.FunctionExpression ||
-              arg.type === AST_NODE_TYPES.ArrowFunctionExpression) &&
-            arg.body.type === AST_NODE_TYPES.BlockStatement
+            arg.type === AST_NODE_TYPES.FunctionExpression ||
+            arg.type === AST_NODE_TYPES.ArrowFunctionExpression
           ) {
             if (!handlerHasVerification(arg.body)) {
               context.report({
