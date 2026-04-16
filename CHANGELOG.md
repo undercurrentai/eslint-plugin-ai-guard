@@ -78,6 +78,14 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 - `no-floating-promise` now detects optional-call floating promises. `doWork?.()` as a statement is parsed as `ExpressionStatement > ChainExpression > CallExpression`; the rule required `node.expression.type === CallExpression` and silently skipped the `ChainExpression` wrapper. Added `getCallExpression` helper to unwrap both in the main visitor and in `isExpressionHandled` (so `.catch`/`.then`/`.finally` on optional calls still counts as handled).
 - `no-hardcoded-secret` regex `SECRET_NAME_PATTERN` had no word-boundary anchors, so identifiers CONTAINING the substrings (`secretary`, `passwordless`, `keyboard`, `authenticator`) falsely triggered the rule. Since it runs at `error` in the recommended/strict/security presets, this blocked first-run adoption on realistic codebases. Replaced with a tokenizer that splits on camel/Pascal case boundaries + snake/kebab separators and matches whole tokens (or adjacent pairs like `api,key`).
 
+**Bug-hunt round 4 (5 — hybrid Codex + Claude CLI sweep):**
+
+- `no-console-in-handler` now flags console calls in concise-arrow route handlers. `app.get('/expr', (req, res) => console.log('expr'))` silently passed because the rule gated on `argument.body.type === BlockStatement` — the third rule in the family (alongside round-3's `require-framework-authz` / `require-webhook-signature`) with that defect. Pass `argument.body` directly to `traverseForConsoleCalls`; the walker descends any node type.
+- `removeNukeIgnore` (CLI config-repair path) no longer globally strips `**/*` substrings. The fallback regex `/"?\*\*\/\*"?/g` ran unconditionally after the primary replacement and would corrupt legitimate globs like `files: ['src/**/*', '**/*.ts']` into `files: ['src/', '.ts']`. Narrowed the fallback regex to match only standalone `'**/*'` lines `(/^\s*['"]\*\*\/\*['"]\s*,?\s*$/gm)` and gated it behind `if (patched === existing)` so it fires only when the primary ignorePatterns/ignores replacement didn't apply — real data-loss prevention on user configs.
+- `ai-guard init-context` templates resynced to active v2 rule IDs. Generated CLAUDE.md / `.cursorrules` / `copilot-instructions.md` embedded deprecated v1 IDs (`no-broad-exception`, `no-await-in-loop`, `no-async-without-await`, `no-redundant-await`, `no-catch-without-use`, `require-auth-middleware`, `require-authz-check`) and hard-coded "17 most common" boilerplate. Updated `RULE_CATEGORIES` to match active presets, added `require-webhook-signature` example, and replaced the fixed count with dynamic `ACTIVE_RULE_COUNT` (currently 13).
+- `ai-guard preset` "Preset Details" UI now derives from the same rule maps that `ai-guard run` uses. Previously the preset command printed a hard-coded list that showed deprecated IDs (`no-broad-exception`, `no-await-in-loop`, `require-auth-middleware`, `require-authz-check`) and claimed "All 17 rules" when strict has 13. Exported `RECOMMENDED_RULES` / `STRICT_RULES` / `SECURITY_RULES` from `cli/utils/eslint-runner.ts` and replaced the hard-coded `presetDetails` with `Object.entries(ruleMap).map(...)`. A regression test asserts the maps never contain any of the seven deprecated rule IDs.
+- `ai-guard baseline` error handlers now `return` after `process.exit(1)`. Three catch blocks called `process.exit` without a following `return`; if `process.exit` is stubbed (test harnesses, some pre-commit wrappers), control fell through and dereferenced `result!` / `existingBaseline!` (both `undefined`) via TS non-null assertion. Defensive hygiene; no user-facing behavior change under normal execution.
+
 ### Internal
 
 - Removed inherited-from-upstream dead utility file `src/utils/ast-helpers.ts` (0 callers).
@@ -87,7 +95,9 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 - `getPathString` returns `null` for template literals whose leading static segment is `''` or `'/'` — dynamic templates are treated as dynamic paths rather than collapsing to the public root.
 - `getStaticPropKey(prop)` — new utility exported from `framework-detectors.ts` that returns the static string key of an object-literal property, accepting both `Identifier` and string-`Literal` forms.
 - `findResourceAccess` / `hasAuthzCall` / `handlerHasVerification` now accept `TSESTree.Node` (widened from `BlockStatement`) to support concise-arrow handler bodies.
-- Test count: 608 → 623 (15 new regression tests for bug-hunt round 3).
+- `RECOMMENDED_RULES` / `STRICT_RULES` / `SECURITY_RULES` — now exported from `cli/utils/eslint-runner.ts` so the interactive `preset` UI and future tools can derive preset contents from a single source of truth.
+- `init-context` now computes `ACTIVE_RULE_COUNT` from `RULE_CATEGORIES` so the generated agent-guidance count stays accurate as rules are added/removed.
+- Test count: 608 → 627 (19 new regression tests across rounds 3 + 4).
 
 ## [2.0.0-beta.1] — 2026-04-15
 
