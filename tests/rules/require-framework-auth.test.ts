@@ -167,6 +167,21 @@ ruleTester.run('require-framework-auth (Fastify)', requireFrameworkAuth, {
         app.get('/users', { preHandler: auth }, handler);
       `,
     },
+    // 8. String-literal property keys: { 'preHandler': [auth] } — formatters
+    // sometimes emit quoted keys, and getStaticPropKey now accepts both forms.
+    {
+      code: `
+        import fastify from 'fastify';
+        app.get('/users', { 'preHandler': [auth] }, handler);
+      `,
+    },
+    // 9. fastify.route() with string-literal method/url keys and preHandler
+    {
+      code: `
+        import fastify from 'fastify';
+        app.route({ 'method': 'GET', 'url': '/users', 'preHandler': [auth], handler: h });
+      `,
+    },
   ],
   invalid: [
     // 1. Route with no options
@@ -190,6 +205,16 @@ ruleTester.run('require-framework-auth (Fastify)', requireFrameworkAuth, {
       code: `
         import fastify from 'fastify';
         app.delete('/items/:id', deleteItem);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    // 4. fastify.route({...}) options-object form without preHandler —
+    // previously dead code because isRouteDefinition filtered 'route' out of
+    // HTTP_METHODS, so checkFastifyRoute's 'route' branch never ran.
+    {
+      code: `
+        import fastify from 'fastify';
+        app.route({ method: 'POST', url: '/users', handler: createUser });
       `,
       errors: [{ messageId: 'missingAuth' }],
     },

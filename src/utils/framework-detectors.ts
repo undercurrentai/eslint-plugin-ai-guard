@@ -147,6 +147,23 @@ export function getMemberPath(node: TSESTree.Node): string[] | null {
   return [...objectPath, unwrapped.property.name];
 }
 
+/**
+ * Return the static string key name of an object-literal property.
+ *
+ * Accepts both Identifier keys (`{ foo: bar }`) and string-Literal keys
+ * (`{ 'foo': bar }`) — formatters and generated code commonly emit quoted
+ * keys, and rules that only recognized Identifier shapes produced
+ * false-positives / false-negatives on the quoted form.
+ */
+export function getStaticPropKey(prop: TSESTree.Node): string | null {
+  if (prop.type !== AST_NODE_TYPES.Property) return null;
+  if (prop.key.type === AST_NODE_TYPES.Identifier) return prop.key.name;
+  if (prop.key.type === AST_NODE_TYPES.Literal && typeof prop.key.value === 'string') {
+    return prop.key.value;
+  }
+  return null;
+}
+
 export function getPathString(node: TSESTree.Node): string | null {
   if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string') {
     return node.value;
