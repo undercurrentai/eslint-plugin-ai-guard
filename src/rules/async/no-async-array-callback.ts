@@ -1,5 +1,6 @@
 import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/utils';
+import { isIdentifierBoundToAsyncFunction } from '../../utils/async-scope';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
@@ -149,85 +150,6 @@ function isAssignedAndConsumedByPromiseCombinator(
   return false;
 }
 
-interface VariableLike {
-  name: string;
-  defs?: Array<{ node?: TSESTree.Node }>;
-}
-
-interface ScopeLike {
-  upper: ScopeLike | null;
-  set?: Map<string, VariableLike>;
-  variables?: VariableLike[];
-}
-
-function isAsyncFunctionLike(node: TSESTree.Node | undefined): boolean {
-  if (!node) {
-    return false;
-  }
-
-  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    return node.async;
-  }
-
-  if (
-    node.type === AST_NODE_TYPES.FunctionExpression ||
-    node.type === AST_NODE_TYPES.ArrowFunctionExpression
-  ) {
-    return node.async;
-  }
-
-  if (
-    node.type === AST_NODE_TYPES.VariableDeclarator &&
-    node.init &&
-    (node.init.type === AST_NODE_TYPES.FunctionExpression ||
-      node.init.type === AST_NODE_TYPES.ArrowFunctionExpression)
-  ) {
-    return node.init.async;
-  }
-
-  return false;
-}
-
-function findVariableInScope(scope: ScopeLike, name: string): VariableLike | null {
-  const fromMap = scope.set?.get(name);
-  if (fromMap) {
-    return fromMap;
-  }
-
-  if (scope.variables) {
-    const fromArray = scope.variables.find((variable) => variable.name === name);
-    if (fromArray) {
-      return fromArray;
-    }
-  }
-
-  return null;
-}
-
-function isIdentifierBoundToAsyncFunction(
-  identifier: TSESTree.Identifier,
-  context: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]>,
-): boolean {
-  let scope = context.sourceCode.getScope(identifier) as unknown as ScopeLike | null;
-
-  while (scope) {
-    const variable = findVariableInScope(scope, identifier.name);
-    if (variable) {
-      const defs = variable.defs ?? [];
-      for (const def of defs) {
-        if (isAsyncFunctionLike(def.node)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    scope = scope.upper;
-  }
-
-  return false;
-}
-
 /**
  * Checks if a node is an async function expression or arrow function.
  */
@@ -236,7 +158,7 @@ function isAsyncCallback(
   context: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]>,
 ): boolean {
   if (node.type === AST_NODE_TYPES.Identifier) {
-    return isIdentifierBoundToAsyncFunction(node, context);
+    return isIdentifierBoundToAsyncFunction(node, context).isAsync;
   }
 
   return (

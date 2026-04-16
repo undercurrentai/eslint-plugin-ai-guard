@@ -1,5 +1,10 @@
 import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/utils';
+import {
+  isIdentifierBoundToAsyncFunction,
+  nodeHasCatchClause,
+  type AsyncBindingInfo,
+} from '../../utils/async-scope';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
@@ -33,164 +38,6 @@ interface ParserServicesLike {
   esTreeNodeToTSNodeMap?: {
     get(node: TSESTree.Node): unknown;
   };
-}
-
-interface VariableLike {
-  name: string;
-  defs?: Array<{ node?: TSESTree.Node }>;
-}
-
-interface ScopeLike {
-  upper: ScopeLike | null;
-  set?: Map<string, VariableLike>;
-  variables?: VariableLike[];
-}
-
-interface AsyncBindingInfo {
-  isAsync: boolean;
-  hasInternalErrorHandling: boolean;
-}
-
-function isAstNode(value: unknown): value is TSESTree.Node {
-  return typeof value === 'object' && value !== null && 'type' in value;
-}
-
-function nodeHasCatchClause(node: TSESTree.Node): boolean {
-  if (node.type === AST_NODE_TYPES.TryStatement && !!node.handler) {
-    return true;
-  }
-
-  for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
-    if (key === 'parent') continue;
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (isAstNode(item) && nodeHasCatchClause(item)) {
-          return true;
-        }
-      }
-      continue;
-    }
-
-    if (isAstNode(value) && nodeHasCatchClause(value)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Check if a CallExpression's callee is known async via local declarations.
- */
-function isAsyncFunctionLike(node: TSESTree.Node | undefined): boolean {
-  if (!node) return false;
-  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    return node.async;
-  }
-  if (
-    node.type === AST_NODE_TYPES.FunctionExpression ||
-    node.type === AST_NODE_TYPES.ArrowFunctionExpression
-  ) {
-    return node.async;
-  }
-  if (
-    node.type === AST_NODE_TYPES.VariableDeclarator &&
-    node.init &&
-    (node.init.type === AST_NODE_TYPES.FunctionExpression ||
-      node.init.type === AST_NODE_TYPES.ArrowFunctionExpression)
-  ) {
-    return node.init.async;
-  }
-  return false;
-}
-
-function getAsyncBindingInfo(node: TSESTree.Node | undefined): AsyncBindingInfo {
-  if (!node) {
-    return { isAsync: false, hasInternalErrorHandling: false };
-  }
-
-  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    return {
-      isAsync: node.async,
-      hasInternalErrorHandling: node.body ? nodeHasCatchClause(node.body) : false,
-    };
-  }
-
-  if (
-    node.type === AST_NODE_TYPES.FunctionExpression ||
-    node.type === AST_NODE_TYPES.ArrowFunctionExpression
-  ) {
-    return {
-      isAsync: node.async,
-      hasInternalErrorHandling:
-        node.body.type === AST_NODE_TYPES.BlockStatement
-          ? nodeHasCatchClause(node.body)
-          : false,
-    };
-  }
-
-  if (
-    node.type === AST_NODE_TYPES.VariableDeclarator &&
-    node.init &&
-    (node.init.type === AST_NODE_TYPES.FunctionExpression ||
-      node.init.type === AST_NODE_TYPES.ArrowFunctionExpression)
-  ) {
-    return {
-      isAsync: node.init.async,
-      hasInternalErrorHandling:
-        node.init.body.type === AST_NODE_TYPES.BlockStatement
-          ? nodeHasCatchClause(node.init.body)
-          : false,
-    };
-  }
-
-  return { isAsync: false, hasInternalErrorHandling: false };
-}
-
-function findVariableInScope(scope: ScopeLike, name: string): VariableLike | null {
-  const fromMap = scope.set?.get(name);
-  if (fromMap) {
-    return fromMap;
-  }
-
-  if (scope.variables) {
-    const fromArray = scope.variables.find((v) => v.name === name);
-    if (fromArray) {
-      return fromArray;
-    }
-  }
-
-  return null;
-}
-
-function isIdentifierBoundToAsyncFunction(
-  identifier: TSESTree.Identifier,
-  context: Readonly<Parameters<ReturnType<typeof createRule>['create']>[0]>,
-): AsyncBindingInfo {
-  let scope = context.sourceCode.getScope(identifier) as unknown as ScopeLike | null;
-
-  while (scope) {
-    const variable = findVariableInScope(scope, identifier.name);
-    if (variable) {
-      const defs = variable.defs ?? [];
-      for (const def of defs) {
-        const info = getAsyncBindingInfo(def.node);
-        if (info.isAsync) {
-          return info;
-        }
-      }
-
-      if (defs.length === 0 && isAsyncFunctionLike(variable as unknown as TSESTree.Node)) {
-        return getAsyncBindingInfo(variable as unknown as TSESTree.Node);
-      }
-
-      return { isAsync: false, hasInternalErrorHandling: false };
-    }
-    scope = scope.upper;
-  }
-
-  return { isAsync: false, hasInternalErrorHandling: false };
 }
 
 function isLocallyAsyncCallee(
