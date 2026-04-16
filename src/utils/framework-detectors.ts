@@ -178,7 +178,7 @@ export function isCallToName(
 }
 
 export function bodyContainsCallTo(
-  body: TSESTree.BlockStatement,
+  body: TSESTree.Node,
   names: Set<string>,
 ): boolean {
   return walkForCall(body, names);

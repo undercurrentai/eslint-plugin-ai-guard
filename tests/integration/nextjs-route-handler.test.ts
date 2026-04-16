@@ -134,4 +134,70 @@ describe('integration: nextjs app router route handler', () => {
 
     expect(authMessages).toHaveLength(0);
   });
+
+  // Bug-hunt regression: concise-arrow-body exports were silently skipped.
+  // `export const POST = (req) => doStuff()` has init.body.type === CallExpression,
+  // not BlockStatement; the previous BlockStatement gate caused a false negative.
+  it('reports require-framework-auth on concise-arrow exported handlers without auth', async () => {
+    const eslint = new ESLint({
+      overrideConfigFile: true,
+      overrideConfig: [
+        {
+          files: ['**/*.{ts,js}'],
+          languageOptions: {
+            parser,
+            parserOptions: { sourceType: 'module' },
+          },
+          plugins: { 'ai-guard': aiGuard },
+          rules: { 'ai-guard/require-framework-auth': 'error' },
+        },
+      ],
+      ignore: false,
+    });
+
+    const code = `
+      export const POST = (request) => fetch('/internal/delete', { method: 'DELETE' });
+    `;
+
+    const [result] = await eslint.lintText(code, {
+      filePath: 'app/api/items/route.ts',
+    });
+    const authMessages = result.messages.filter(
+      (m) => m.ruleId === 'ai-guard/require-framework-auth',
+    );
+    expect(authMessages.length).toBeGreaterThan(0);
+    expect(authMessages[0].message).toContain('POST');
+  });
+
+  it('does not report concise-arrow handler that calls auth()', async () => {
+    const eslint = new ESLint({
+      overrideConfigFile: true,
+      overrideConfig: [
+        {
+          files: ['**/*.{ts,js}'],
+          languageOptions: {
+            parser,
+            parserOptions: { sourceType: 'module' },
+          },
+          plugins: { 'ai-guard': aiGuard },
+          rules: { 'ai-guard/require-framework-auth': 'error' },
+        },
+      ],
+      ignore: false,
+    });
+
+    // Concise arrow that calls auth() in its expression body — the value of the
+    // arrow is the await Promise; auth() is invoked first.
+    const code = `
+      export const DELETE = async (request) => (await auth(), Response.json({ ok: true }));
+    `;
+
+    const [result] = await eslint.lintText(code, {
+      filePath: 'app/api/items/route.ts',
+    });
+    const authMessages = result.messages.filter(
+      (m) => m.ruleId === 'ai-guard/require-framework-auth',
+    );
+    expect(authMessages).toHaveLength(0);
+  });
 });

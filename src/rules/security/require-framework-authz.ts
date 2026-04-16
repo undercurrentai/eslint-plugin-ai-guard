@@ -203,6 +203,9 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
       // from object patterns whose init traces to req.params|body|query.
       // Detects the AI-codegen-common destructuring escape from member-access
       // detection. (audit H6)
+      //
+      // Also handles aliased destructuring like `const { foo: id } = req.params`
+      // by checking BOTH the source key name AND the local binding name.
       if (
         node.type === AST_NODE_TYPES.VariableDeclarator &&
         node.id.type === AST_NODE_TYPES.ObjectPattern &&
@@ -216,10 +219,32 @@ export const requireFrameworkAuthz = createRule<Options, 'missingAuthz'>({
           if (sourceMatches) {
             for (const prop of node.id.properties) {
               if (prop.type !== AST_NODE_TYPES.Property) continue;
-              if (prop.key.type !== AST_NODE_TYPES.Identifier) continue;
-              const fieldName = prop.key.name.toLowerCase();
-              if (fieldName === 'id' || fieldName.endsWith('id')) {
-                return `${initPath[0]}.${initPath[1]}.${prop.key.name}`;
+              // Source key name: prop.key (Identifier or Literal for computed)
+              let sourceKey: string | null = null;
+              if (prop.key.type === AST_NODE_TYPES.Identifier) {
+                sourceKey = prop.key.name;
+              } else if (
+                prop.key.type === AST_NODE_TYPES.Literal &&
+                typeof prop.key.value === 'string'
+              ) {
+                sourceKey = prop.key.value;
+              }
+              // Local binding name: prop.value when it's an Identifier;
+              // for `{ id = 'x' }` (default), prop.value is AssignmentPattern.
+              let bindingName: string | null = null;
+              if (prop.value.type === AST_NODE_TYPES.Identifier) {
+                bindingName = prop.value.name;
+              } else if (
+                prop.value.type === AST_NODE_TYPES.AssignmentPattern &&
+                prop.value.left.type === AST_NODE_TYPES.Identifier
+              ) {
+                bindingName = prop.value.left.name;
+              }
+              const isIdLike = (n: string | null) =>
+                n !== null && (n.toLowerCase() === 'id' || n.toLowerCase().endsWith('id'));
+              if (isIdLike(sourceKey) || isIdLike(bindingName)) {
+                const reportKey = sourceKey ?? bindingName ?? '<unknown>';
+                return `${initPath[0]}.${initPath[1]}.${reportKey}`;
               }
             }
           }

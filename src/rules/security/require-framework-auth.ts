@@ -316,18 +316,32 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
       const method = (callee.property as TSESTree.Identifier).name;
       const args = node.arguments;
 
-      // Express chained route form: router.route('/x').post(auth, handler)
-      // Path is inside the inner .route() call; args here are [...middleware, handler] only.
-      const obj = unwrapTSExpression(callee.object);
-      if (
-        obj.type === AST_NODE_TYPES.CallExpression &&
-        obj.callee.type === AST_NODE_TYPES.MemberExpression &&
-        obj.callee.property.type === AST_NODE_TYPES.Identifier &&
-        obj.callee.property.name === 'route'
-      ) {
-        const inheritedPath = obj.arguments[0]
-          ? getPathString(obj.arguments[0])
-          : null;
+      // Express chained route form:
+      // - router.route('/x').post(auth, handler)
+      // - router.route('/x').post(...).get(...)
+      // Path is in the originating .route() call; each .METHOD() receives only
+      // middleware + final handler args.
+      function getRoutePathFromChain(start: TSESTree.Node): string | null | undefined {
+        let current = unwrapTSExpression(start);
+        while (current.type === AST_NODE_TYPES.CallExpression) {
+          if (
+            current.callee.type !== AST_NODE_TYPES.MemberExpression ||
+            current.callee.property.type !== AST_NODE_TYPES.Identifier
+          ) {
+            return undefined;
+          }
+          const propName = current.callee.property.name;
+          if (propName === 'route') {
+            return current.arguments[0] ? getPathString(current.arguments[0]) : null;
+          }
+          if (!HTTP_METHODS.has(propName)) return undefined;
+          current = unwrapTSExpression(current.callee.object);
+        }
+        return undefined;
+      }
+
+      const inheritedPath = getRoutePathFromChain(callee.object);
+      if (inheritedPath !== undefined) {
         if (inheritedPath && isPublicRoute(inheritedPath)) return;
         // For chained form, all args are middleware + final handler (no path arg)
         const middlewareArgs = args.slice(0, -1);
@@ -537,10 +551,11 @@ export const requireFrameworkAuth = createRule<Options, 'missingAuth' | 'missing
               if (mutatingOnly && method === 'GET') continue;
               const init = declarator.init;
               if (
-                (init.type === AST_NODE_TYPES.ArrowFunctionExpression ||
-                  init.type === AST_NODE_TYPES.FunctionExpression) &&
-                init.body.type === AST_NODE_TYPES.BlockStatement
+                init.type === AST_NODE_TYPES.ArrowFunctionExpression ||
+                init.type === AST_NODE_TYPES.FunctionExpression
               ) {
+                // Walk the function body whether it's a BlockStatement or a
+                // concise arrow expression body (e.g., `export const POST = req => doX()`).
                 if (!bodyContainsCallTo(init.body, allNextjsCallers)) {
                   context.report({
                     node: declarator,

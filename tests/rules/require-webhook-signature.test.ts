@@ -216,3 +216,40 @@ ruleTester.run('require-webhook-signature', requireWebhookSignature, {
     },
   ],
 });
+
+// ---------------------------------------------------------------------------
+// Bug-hunt regression tests
+// ---------------------------------------------------------------------------
+
+ruleTester.run('require-webhook-signature (bug-hunt — class-based and member receiver)', requireWebhookSignature, {
+  valid: [
+    // svix imported, this.wh.verify(...) — ThisExpression receiver accepted via lenient fallback.
+    {
+      code: `
+        import { Webhook } from 'svix';
+        class WebhookHandler {
+          constructor() { this.wh = new Webhook(process.env.WHSEC); }
+          register(app) {
+            app.post('/webhook', (req, res) => {
+              this.wh.verify(req.body, req.headers);
+              res.sendStatus(200);
+            });
+          }
+        }
+      `,
+    },
+    // svix imported, obj.wh.verify(...) — MemberExpression receiver via lenient fallback.
+    {
+      code: `
+        import { Webhook } from 'svix';
+        const services = { wh: new Webhook(process.env.WHSEC) };
+        app.post('/webhook', (req, res) => {
+          services.wh.verify(req.body, req.headers);
+          res.sendStatus(200);
+        });
+      `,
+    },
+  ],
+  invalid: [],
+});
+

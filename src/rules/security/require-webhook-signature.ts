@@ -111,6 +111,15 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
 
     function isWebhookFile(): boolean {
       const fn = context.filename.toLowerCase();
+      // Skip test/spec/fixture files — they often contain `webhook` in the path
+      // but are intentional test fixtures that don't represent real route handlers.
+      if (
+        /[/\\]__tests__[/\\]/.test(fn) ||
+        /\.(test|spec)\.[cm]?[jt]sx?$/.test(fn) ||
+        /[/\\](tests?|fixtures?|mocks?|__mocks__)[/\\]/.test(fn)
+      ) {
+        return false;
+      }
       return fn.includes('webhook');
     }
 
@@ -191,12 +200,18 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
           }
         }
       }
-      // Fallback: if either lib is imported in this file and the receiver is
-      // an Identifier we couldn't trace (likely a local from `const wh = new Webhook(secret)`),
-      // treat as verified. This is intentionally lenient to avoid false positives
-      // on common patterns. Only the file-level import is required, not the binding chain.
+      // Fallback: if either lib is imported in this file, accept untracable
+      // receivers — Identifier (`const wh = new Webhook(secret)`),
+      // MemberExpression (`obj.wh.verify(...)`), or ThisExpression
+      // (`this.wh.verify(...)` in class-based handlers). Intentionally lenient
+      // to avoid false positives on common patterns. Only the file-level import
+      // is required, not the binding chain.
       // See docs/rules/require-webhook-signature.md for the rationale.
-      if (node.type === AST_NODE_TYPES.Identifier) {
+      if (
+        node.type === AST_NODE_TYPES.Identifier ||
+        node.type === AST_NODE_TYPES.MemberExpression ||
+        node.type === AST_NODE_TYPES.ThisExpression
+      ) {
         return hasSvix || hasOctokit;
       }
       return false;

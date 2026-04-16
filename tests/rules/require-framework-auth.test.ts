@@ -683,6 +683,15 @@ ruleTester.run('require-framework-auth (audit — Express .route() chain)', requ
         router.route('/health').get(handler);
       `,
     },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.route('/users')
+          .post(authenticate, createUser)
+          .get(authenticate, listUsers);
+      `,
+    },
   ],
   invalid: [
     {
@@ -690,6 +699,16 @@ ruleTester.run('require-framework-auth (audit — Express .route() chain)', requ
         import express from 'express';
         const router = express.Router();
         router.route('/users').post(createUser);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.route('/users')
+          .post(authenticate, createUser)
+          .get(listUsers);
       `,
       errors: [{ messageId: 'missingAuth' }],
     },

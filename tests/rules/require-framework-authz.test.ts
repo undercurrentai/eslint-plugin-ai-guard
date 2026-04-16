@@ -378,3 +378,66 @@ ruleTester.run('require-framework-authz (audit — destructured resource id)', r
     },
   ],
 });
+
+ruleTester.run('require-framework-authz (bug-hunt — aliased and computed destructuring)', requireFrameworkAuthz, {
+  invalid: [
+    // Aliased: source key is id-like (`{ id: userId }`)
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          const { id: userId } = req.params;
+          const user = db.find(userId);
+          res.json(user);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+    // Aliased: source key non-id, binding is id-like (`{ foo: id }`)
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          const { foo: id } = req.params;
+          const user = db.find(id);
+          res.json(user);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+    // Computed Literal key: `{ ['id']: id }`
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          const { ['id']: id } = req.params;
+          const user = db.find(id);
+          res.json(user);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+    // Default value: `{ id = 'x' }`
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          const { id = 'x' } = req.params;
+          const user = db.find(id);
+          res.json(user);
+        });
+      `,
+      errors: [{ messageId: 'missingAuthz' }],
+    },
+  ],
+  valid: [
+    // Aliased + authz before use — should not fire
+    {
+      code: `
+        router.get('/users/:id', (req, res) => {
+          authorize(req.user, req.params.id);
+          const { id: userId } = req.params;
+          const user = db.find(userId);
+          res.json(user);
+        });
+      `,
+    },
+  ],
+});
+
