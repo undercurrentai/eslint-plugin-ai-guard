@@ -2,20 +2,24 @@ import { allRules } from './rules';
 import recommended from './configs/recommended';
 import strict from './configs/strict';
 import security from './configs/security';
+import compat from './configs/compat';
 
+// NOTE: only a single default export. Named exports mix poorly with `tsup`'s
+// `cjsInterop: true`, which is how we keep CJS consumers reading the plugin
+// directly via `require()` (instead of having to reach through `.default`).
+// Access named parts via the plugin object: `aiGuard.rules`, `aiGuard.configs.compat`, etc.
 const plugin = {
   meta: {
-    name: 'eslint-plugin-ai-guard',
-    version: '1.1.11',
+    name: '@undercurrent/eslint-plugin-ai-guard',
+    version: '2.0.0-beta.1',
   },
   rules: allRules,
   configs: {
     recommended,
     strict,
     security,
+    compat,
   },
 };
 
 export default plugin;
-export { allRules as rules };
-export { recommended, strict, security };

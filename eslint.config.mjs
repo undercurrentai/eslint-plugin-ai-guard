@@ -1,4 +1,5 @@
-import aiGuard from 'eslint-plugin-ai-guard';
+// Dogfood: lint ourselves with our own built plugin.
+import aiGuard from './dist/index.mjs';
 import tsParser from '@typescript-eslint/parser';
 
 export default [

@@ -2,7 +2,7 @@ import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
+  (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
 );
 
 function isInsideTryLikeBlock(
@@ -54,15 +54,17 @@ export const noRedundantAwait = createRule({
   name: 'no-redundant-await',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['@typescript-eslint/return-await'],
     docs: {
       description:
-        'Disallow `return await` in async functions when not inside try/catch/finally. AI tools frequently emit this pattern even when it adds no behavioral value and extra microtask overhead.',
+        '[DEPRECATED — use `@typescript-eslint/return-await`] Disallow `return await` in async functions when not inside try/catch/finally. Kept for backwards-compatibility in v2.x; removed in v3.0.',
     },
     fixable: undefined,
     schema: [],
     messages: {
       redundantAwait:
-        'Redundant `return await` detected. AI tools frequently generate this pattern. Return the Promise directly unless you need await for try/catch behavior.',
+        '[ai-guard deprecated — use `@typescript-eslint/return-await`] Redundant `return await` detected. Return the Promise directly unless you need await for try/catch behavior.',
     },
   },
   defaultOptions: [],

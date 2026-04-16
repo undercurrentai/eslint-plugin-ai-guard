@@ -1,22 +1,24 @@
 import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
+  (name) => `https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/docs/rules/${name}.md`
 );
 
 export const noCatchWithoutUse = createRule({
   name: 'no-catch-without-use',
   meta: {
     type: 'suggestion',
+    deprecated: true,
+    replacedBy: ['@typescript-eslint/no-unused-vars'],
     docs: {
       description:
-        'Disallow catch parameters that are never used. AI tools frequently generate `catch (e)` while ignoring the error entirely, which hides actionable debugging context.',
+        '[DEPRECATED — use `@typescript-eslint/no-unused-vars` with `caughtErrors: "all"`] Disallow catch parameters that are never used. Kept for backwards-compatibility in v2.x; removed in v3.0.',
     },
     fixable: undefined,
     schema: [],
     messages: {
       unusedCatchParam:
-        'Catch parameter `{{name}}` is never used. AI-generated catch blocks often include an unused error variable that hides missing error handling. Use it, remove it, or add explicit intent.',
+        '[ai-guard deprecated — use `@typescript-eslint/no-unused-vars` with `caughtErrors: "all"`] Catch parameter `{{name}}` is never used.',
     },
   },
   defaultOptions: [],

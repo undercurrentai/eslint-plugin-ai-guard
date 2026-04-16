@@ -1,6 +1,6 @@
 # Rules Reference
 
-All 17 rules provided by `eslint-plugin-ai-guard`, organized by category.
+All 17 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by category.
 
 ---
 

@@ -52,7 +52,7 @@ Each generated file contains code examples in the specific format preferred by i
 | Flag | Description |
 |---|---|
 | `--all` | Generate instruction files for all supported agents, skipping the interactive prompt. |
-| `--force` | Overwrite existing files automatically (useful for updating rules after an `eslint-plugin-ai-guard` version upgrade). |
+| `--force` | Overwrite existing files automatically (useful for updating rules after an `@undercurrent/eslint-plugin-ai-guard` version upgrade). |
 | `--rules <categories>` | Generate instructions only for specific rule categories. Comma-separated list of: `async`, `security`, `error-handling`, `quality`. |
 | `--dry-run` | Preview the content that would be generated without actually writing any files to disk. |
 

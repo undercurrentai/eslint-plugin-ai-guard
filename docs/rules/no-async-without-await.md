@@ -1,5 +1,9 @@
 # no-async-without-await
 
+> [!WARNING]
+> **DEPRECATED in v2.0.0.** This rule will be removed in v3.0.0. Use `@typescript-eslint/require-await` instead. See [migration guide](../migration/v1-to-v2.md). Existing configs keep working, but findings are prefixed with `[ai-guard deprecated — use X]`.
+
+
 **Category:** Async Correctness | **Severity:** `warn` (recommended, strict)
 
 ---

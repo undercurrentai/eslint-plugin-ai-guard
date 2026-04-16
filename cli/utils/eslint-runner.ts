@@ -63,21 +63,23 @@ function normalizePlugin(raw: unknown): AiGuardPlugin {
     return raw as AiGuardPlugin;
   }
   throw new Error(
-    'Could not load eslint-plugin-ai-guard. Run: npm install eslint-plugin-ai-guard',
+    'Could not load @undercurrent/eslint-plugin-ai-guard. Run: npm install @undercurrent/eslint-plugin-ai-guard',
   );
 }
 
 // ─── Preset rule maps ─────────────────────────────────────────────────────────
 
+// v2.0: kept in sync with src/configs/recommended.ts. The 5 deprecated rules
+// (no-await-in-loop, no-async-without-await, no-redundant-await,
+// no-broad-exception, no-catch-without-use) are intentionally absent — they
+// remain available via explicit rule-level configuration but are no longer
+// enabled by the CLI's zero-config run.
 const RECOMMENDED_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-empty-catch': 'error',
   'ai-guard/no-floating-promise': 'error',
   'ai-guard/no-hardcoded-secret': 'error',
   'ai-guard/no-eval-dynamic': 'error',
-  'ai-guard/no-broad-exception': 'warn',
   'ai-guard/require-auth-middleware': 'warn',
-  'ai-guard/no-await-in-loop': 'warn',
-  'ai-guard/no-async-without-await': 'warn',
   'ai-guard/no-sql-string-concat': 'warn',
   'ai-guard/no-async-array-callback': 'warn',
   'ai-guard/no-unsafe-deserialize': 'warn',
@@ -86,14 +88,9 @@ const RECOMMENDED_RULES: Record<string, RuleLevel> = {
 
 const STRICT_RULES: Record<string, RuleLevel> = {
   'ai-guard/no-empty-catch': 'error',
-  'ai-guard/no-broad-exception': 'error',
   'ai-guard/no-catch-log-rethrow': 'error',
-  'ai-guard/no-catch-without-use': 'error',
   'ai-guard/no-async-array-callback': 'error',
   'ai-guard/no-floating-promise': 'error',
-  'ai-guard/no-await-in-loop': 'error',
-  'ai-guard/no-async-without-await': 'error',
-  'ai-guard/no-redundant-await': 'error',
   'ai-guard/no-hardcoded-secret': 'error',
   'ai-guard/no-eval-dynamic': 'error',
   'ai-guard/no-sql-string-concat': 'error',
@@ -155,32 +152,54 @@ export function isSkippablePatternError(error: Error): boolean {
 
 async function loadPluginModuleFromCwd(cwd: string): Promise<unknown> {
   const { createRequire } = await import('module');
-  const requireFromCwd = createRequire(path.join(cwd, 'package.json'));
+  const { PLUGIN_NAMES } = await import('./constants.js');
 
-  try {
-    const resolved = requireFromCwd.resolve('eslint-plugin-ai-guard');
-    return import(pathToFileURL(resolved).href);
-  } catch {
-    // Fall through to local dist fallback.
+  // Anchor createRequire on package.json when present; otherwise use the cwd
+  // directory itself as the resolution root. This prevents silent fall-through
+  // to the local dist/src fallbacks when the user is in a workspace root
+  // without a package.json.
+  const cwdPkg = path.join(cwd, 'package.json');
+  const anchor = fs.existsSync(cwdPkg) ? cwdPkg : path.join(cwd, 'index.js');
+  const requireFromCwd = createRequire(anchor);
+
+  // Try the scoped name first (v2.x), falling back to the legacy unscoped name
+  // (v1.x / upstream) so users mid-migration don't get stuck. We resolve AND
+  // require from the resolved path: if resolve succeeds but loading that
+  // specific file fails (broken package, missing exports target), we let the
+  // error propagate rather than silently retrying a different candidate or
+  // falling through to a local copy.
+  let lastResolveError: unknown = null;
+  for (const pkgName of PLUGIN_NAMES) {
+    let resolved: string;
+    try {
+      resolved = requireFromCwd.resolve(pkgName);
+    } catch (err) {
+      lastResolveError = err;
+      continue;
+    }
+    return requireFromCwd(resolved);
   }
 
   const localDistEntry = path.join(cwd, 'dist', 'index.js');
   if (fs.existsSync(localDistEntry)) {
-    return import(pathToFileURL(localDistEntry).href);
+    // createRequire() gives a vanilla Node CJS require — bypasses any vite-node
+    // ESM-wrapping that would otherwise produce `{default: {default: plugin}}`.
+    return requireFromCwd(localDistEntry);
   }
 
   const localSrcEntry = path.join(cwd, 'src', 'index.ts');
   if (fs.existsSync(localSrcEntry)) {
     try {
-      return import(pathToFileURL(localSrcEntry).href);
+      return await import(pathToFileURL(localSrcEntry).href);
     } catch (err: unknown) {
       const reason = err instanceof Error ? err.message : String(err);
       log.debug(`Local src plugin import failed: ${reason}`);
     }
   }
 
+  const detail = lastResolveError instanceof Error ? ` (${lastResolveError.message})` : '';
   throw new Error(
-    'eslint-plugin-ai-guard is not installed. Run: npm install --save-dev eslint-plugin-ai-guard',
+    `@undercurrent/eslint-plugin-ai-guard is not installed${detail}. Run: npm install --save-dev @undercurrent/eslint-plugin-ai-guard`,
   );
 }
 

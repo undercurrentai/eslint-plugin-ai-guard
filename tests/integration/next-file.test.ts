@@ -54,6 +54,9 @@ describe('integration: next-like file sample', () => {
 
     expect(ruleIds).toContain('ai-guard/no-floating-promise');
     expect(ruleIds).toContain('ai-guard/no-sql-string-concat');
-    expect(ruleIds).toContain('ai-guard/no-async-without-await');
+
+    // v2.0: `no-async-without-await` is deprecated and removed from recommended.
+    // Users should use `@typescript-eslint/require-await` instead.
+    expect(ruleIds).not.toContain('ai-guard/no-async-without-await');
   });
 });

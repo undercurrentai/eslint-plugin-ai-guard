@@ -38,7 +38,9 @@ try {
       expect(result.totalIssues).toBeGreaterThan(0);
       expect(ruleIds).toContain('ai-guard/no-empty-catch');
       expect(ruleIds).toContain('ai-guard/no-floating-promise');
-      expect(ruleIds).toContain('ai-guard/no-async-without-await');
+      // v2.0: no-async-without-await is deprecated and no longer in the
+      // recommended preset. Users who want it must opt in explicitly.
+      expect(ruleIds).not.toContain('ai-guard/no-async-without-await');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

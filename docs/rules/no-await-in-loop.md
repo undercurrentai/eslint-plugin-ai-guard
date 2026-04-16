@@ -1,5 +1,9 @@
 # no-await-in-loop
 
+> [!WARNING]
+> **DEPRECATED in v2.0.0.** This rule will be removed in v3.0.0. Use ESLint core `no-await-in-loop` instead. See [migration guide](../migration/v1-to-v2.md). Existing configs keep working, but findings are prefixed with `[ai-guard deprecated — use X]`.
+
+
 **Category:** Async Correctness | **Severity:** `warn` (recommended), `error` (strict)
 
 ---

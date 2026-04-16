@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import type { ConfigType } from './detector.js';
+import {
+  PLUGIN_NAME,
+  contentReferencesPlugin,
+} from './constants.js';
 
 export type Preset = 'recommended' | 'strict' | 'security';
 
@@ -28,7 +32,7 @@ export function writeConfig(configPath: string, content: string): void {
 //  3. Puts ignores first so they apply to all following configs
 
 export function generateFlatConfig(preset: Preset): string {
-  return `import aiGuard from 'eslint-plugin-ai-guard';
+  return `import aiGuard from '${PLUGIN_NAME}';
 
 export default [
   // Ignore generated / dependency directories
@@ -76,10 +80,8 @@ export function generateLegacyConfig(preset: Preset): string {
 
 // ─── Flat Config Patching (ESLint v9) ─────────────────────────────────────────
 
-const AI_GUARD_MARKER = 'eslint-plugin-ai-guard';
-
 export function isInvalidAiGuardConfig(content: string): boolean {
-  if (!content.includes('eslint-plugin-ai-guard') && !content.includes('ai-guard')) {
+  if (!contentReferencesPlugin(content) && !content.includes('ai-guard')) {
     return false;
   }
 
@@ -117,11 +119,11 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
   }
 
   // If already configured and valid — leave untouched
-  if (existing.includes(AI_GUARD_MARKER)) {
+  if (contentReferencesPlugin(existing)) {
     return existing;
   }
 
-  const importLine = `import aiGuard from 'eslint-plugin-ai-guard';\n`;
+  const importLine = `import aiGuard from '${PLUGIN_NAME}';\n`;
 
   const rulesBlock = `
   // ai-guard injected by ai-guard CLI
@@ -161,11 +163,8 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
 function findLastImportEnd(src: string): number {
   const lines = src.split('\n');
   let lastImportLine = -1;
-  let charCount = 0;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (/^\s*import\s+/.test(line)) lastImportLine = i;
-    charCount += line.length + 1; // +1 for \n
+    if (/^\s*import\s+/.test(lines[i])) lastImportLine = i;
   }
   if (lastImportLine === -1) return -1;
 
@@ -360,13 +359,9 @@ export function validateFlatConfigText(content: string): string[] {
   if (!content.includes('export default')) {
     problems.push('Missing `export default` — file must be an ES module');
   }
-  if (!content.includes('eslint-plugin-ai-guard') && !content.includes('aiGuard')) {
+  if (!contentReferencesPlugin(content) && !content.includes('aiGuard')) {
     problems.push('Plugin import not found — ai-guard plugin may not be referenced');
   }
-  if (!content.trim().endsWith('];') && !content.trim().endsWith('];')) {
-    // minor — not fatal
-  }
-
   // Detect nuke ignore that would prevent any files from being linted
   if (content.includes('"**/*"') || content.includes("'**/*'")) {
     problems.push(

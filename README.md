@@ -1,24 +1,26 @@
 <p align="center">
-  <h1 align="center">eslint-plugin-ai-guard</h1>
+  <h1 align="center">@undercurrent/eslint-plugin-ai-guard</h1>
   <p align="center">
-    <strong>🛡️ ESLint plugin that catches the code patterns AI tools get wrong most often.</strong>
+    <strong>🛡️ Framework-deep, AI-risk-focused ESLint policy layer for agent-written JS/TS application code.</strong>
   </p>
   <p align="center">
-    <a href="https://www.npmjs.com/package/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/v/eslint-plugin-ai-guard.svg?style=flat-square" alt="npm version"></a>
-    <a href="https://github.com/YashJadhav21/eslint-plugin-ai-guard/actions"><img src="https://img.shields.io/github/actions/workflow/status/YashJadhav21/eslint-plugin-ai-guard/ci.yml?style=flat-square&label=CI" alt="CI"></a>
-    <a href="https://www.npmjs.com/package/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/dm/eslint-plugin-ai-guard.svg?style=flat-square" alt="downloads"></a>
-    <a href="https://github.com/YashJadhav21/eslint-plugin-ai-guard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/eslint-plugin-ai-guard.svg?style=flat-square" alt="license"></a>
+    <a href="https://www.npmjs.com/package/@undercurrent/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/v/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="npm version"></a>
+    <a href="https://github.com/undercurrentai/eslint-plugin-ai-guard/actions"><img src="https://img.shields.io/github/actions/workflow/status/undercurrentai/eslint-plugin-ai-guard/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+    <a href="https://www.npmjs.com/package/@undercurrent/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/dm/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="downloads"></a>
+    <a href="https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="license"></a>
   </p>
 </p>
 
 ---
 
-AI-generated code has **1.7× more issues** and **2.74× more security vulnerabilities** than human code ([CodeRabbit 2025](https://www.coderabbit.ai/)). Existing linters catch human mistakes — `ai-guard` catches the patterns AI tools consistently get wrong: empty catch blocks, floating promises, async array misuse, and more.
+> **Lineage.** Forked from [YashJadhav21/eslint-plugin-ai-guard](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT) at v1.1.11. The `@undercurrent` fork diverges to pursue a framework-deep, AI-risk-focused policy scope: layered secret detection, framework-aware auth/authz/webhook rules, a `.ai-guard/policy.yaml` compiler emitting ESLint + semgrep + SARIF + multi-agent instruction files. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
+
+AI-generated code has **1.7× more issues** and **2.74× more security vulnerabilities** than human code ([CodeRabbit 2025](https://www.coderabbit.ai/)). Existing linters catch human mistakes — `ai-guard` catches the patterns AI tools consistently get wrong: empty catch blocks, floating promises, async array misuse, framework-boundary errors (missing auth, unverified webhooks, unsanitized parsing), and more.
 
 ## Install
 
 ```bash
-npm install --save-dev eslint-plugin-ai-guard
+npm install --save-dev @undercurrent/eslint-plugin-ai-guard
 ```
 
 ## 🚀 Quick Start – CLI (no config needed)
@@ -152,7 +154,7 @@ const users = await Promise.all(userIds.map(async (id) => {
 #### Flat Config: strict
 
 ```javascript
-import aiGuard from "eslint-plugin-ai-guard";
+import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
 
 export default [
   {
@@ -165,7 +167,7 @@ export default [
 #### Flat Config: security
 
 ```javascript
-import aiGuard from "eslint-plugin-ai-guard";
+import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
 
 export default [
   {
@@ -187,14 +189,14 @@ These patterns pass TypeScript and existing linters. `ai-guard` catches them.
 
 ## Supported Environments
 
-- **ESLint** 8.x and 9.x (flat config)
+- **ESLint** 9.x (flat config). ESLint 8 legacy config: stay on the upstream `eslint-plugin-ai-guard@1.x`.
 - **Node.js** ≥ 18
 - **TypeScript** and JavaScript
 
 ## Development
 
 ```bash
-git clone https://github.com/YashJadhav21/eslint-plugin-ai-guard.git
+git clone https://github.com/undercurrentai/eslint-plugin-ai-guard.git
 cd eslint-plugin-ai-guard
 npm install
 npm run test        # Run test suite
@@ -206,9 +208,11 @@ npm run typecheck   # TypeScript check
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-**Rule requests:** Open an issue using the [Rule Request template](https://github.com/YashJadhav21/eslint-plugin-ai-guard/issues/new).
+**Rule requests:** Open an issue using the [Rule Request template](https://github.com/undercurrentai/eslint-plugin-ai-guard/issues/new).
 
-**False positive reports:** Open an issue using the [False Positive template](https://github.com/YashJadhav21/eslint-plugin-ai-guard/issues/new) — we take zero false positives seriously.
+**False positive reports:** Open an issue using the [False Positive template](https://github.com/undercurrentai/eslint-plugin-ai-guard/issues/new) — we take zero false positives seriously.
+
+**Upstream contributions (dual-track):** This fork also contributes fixes and quality improvements back to the [original upstream repo](https://github.com/YashJadhav21/eslint-plugin-ai-guard) where they align with upstream's scope.
 
 ## License
 

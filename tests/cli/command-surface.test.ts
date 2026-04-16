@@ -38,6 +38,24 @@ describe('cli command surface helpers', () => {
     }
   });
 
+  it('detects legacy unscoped plugin installs for migration compatibility', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-guard-legacy-plugin-'));
+    try {
+      const legacyPkgDir = path.join(dir, 'node_modules', 'eslint-plugin-ai-guard');
+      fs.mkdirSync(legacyPkgDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(legacyPkgDir, 'package.json'),
+        JSON.stringify({ name: 'eslint-plugin-ai-guard', version: '1.1.11' }),
+        'utf8',
+      );
+
+      const result = detect(dir);
+      expect(result.pluginInstalled).toBe(true);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('generated configs include ai-guard presets for preset command flow', () => {
     const flat = generateFlatConfig('strict');
     const legacy = generateLegacyConfig('security');

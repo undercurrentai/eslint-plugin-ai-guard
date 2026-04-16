@@ -1,0 +1,47 @@
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
+This project follows [Semantic Versioning](https://semver.org/). The `@undercurrent` fork uses a 2.x lineage independent from the upstream `eslint-plugin-ai-guard` 1.x line.
+
+## [2.0.0-beta.1] — 2026-04-15
+
+First beta of the `@undercurrent/eslint-plugin-ai-guard` fork. Diverges from upstream `YashJadhav21/eslint-plugin-ai-guard@1.1.11`.
+
+### ⚠️  BREAKING
+
+- **Package renamed.** `eslint-plugin-ai-guard` → `@undercurrent/eslint-plugin-ai-guard`. Update imports in your flat config. The plugin-registration key (`"ai-guard"`) is unchanged.
+- **ESLint 8 legacy config dropped.** v2.x supports ESLint 9 flat config only. Stay on upstream `eslint-plugin-ai-guard@1.x` if you need ESLint 8 support.
+- **5 rules deprecated** (removed in v3.0.0). Replaced by superior upstream rules:
+  - `ai-guard/no-await-in-loop` → ESLint core `no-await-in-loop`
+  - `ai-guard/no-async-without-await` → `@typescript-eslint/require-await`
+  - `ai-guard/no-redundant-await` → `@typescript-eslint/return-await`
+  - `ai-guard/no-broad-exception` → `@typescript-eslint/no-explicit-any` + TypeScript `useUnknownInCatchVariables` compiler option
+  - `ai-guard/no-catch-without-use` → `@typescript-eslint/no-unused-vars` with `{ caughtErrors: "all" }`
+- **Presets cleaned.** The 5 deprecated rules are no longer present in `recommended` or `strict`. Users who want them must opt in explicitly. Deprecated rules emit findings with a `[ai-guard deprecated — use X]` prefix to surface the migration path.
+
+### Added
+
+- **`compat` preset.** New `aiGuard.configs.compat` — disables the 5 deprecated rules in one line, so users can enable the upstream replacements under their own control. See [`docs/guides/compat-config.md`](./docs/guides/compat-config.md).
+- **Migration guide.** [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md) walks through the upgrade step-by-step.
+- **Lineage note** in `README.md` crediting upstream author YashJadhav21 and documenting divergence rationale.
+
+### Changed
+
+- `package.json` `name`, `version`, `repository.url`, `bugs.url`, `homepage`, `author`, and `contributors` updated for the fork. `publishConfig.access: "public"` added.
+- Plugin `meta.name`/`meta.version` aligned with package.
+- Rule docs URLs in all 17 rules updated from `YashJadhav21/...` to `undercurrentai/...`.
+- CLI unhandled-rejection crash link updated to the fork's issue tracker.
+
+### Attribution
+
+This fork is under MIT license, preserving upstream's license. Upstream author YashJadhav21 is credited as original author in `package.json#contributors` and in the README lineage note.
+
+The fork pursues an independent scope (framework-deep, AI-risk-focused policy layer). Where we find fixes that apply to upstream's scope, we contribute back via PRs to [`YashJadhav21/eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard).
+
+### Coming in later v2.x betas
+
+- `2.0.0-beta.2` — framework-aware auth/authz/webhook-signature trio.
+- `2.0.0-beta.3` — layered secret detection (provider regex + context + entropy with split thresholds).
+- `2.0.0-beta.4` — `.ai-guard/policy.yaml` policy compiler + 8-agent instruction file generation.
+- `2.1.0` — narrowed single-function taint MVP.

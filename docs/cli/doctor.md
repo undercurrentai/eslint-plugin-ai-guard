@@ -15,9 +15,9 @@ ai-guard doctor
 | Check | What it verifies |
 |---|---|
 | ESLint installed | `eslint` is resolvable from your project |
-| Plugin installed | `eslint-plugin-ai-guard` is resolvable from your project |
+| Plugin installed | `@undercurrent/eslint-plugin-ai-guard` is resolvable from your project |
 | Config present | At least one `eslint.config.*` or `.eslintrc.*` file exists |
-| Plugin wired | Your config references `ai-guard` or `eslint-plugin-ai-guard` |
+| Plugin wired | Your config references `ai-guard` or `@undercurrent/eslint-plugin-ai-guard` |
 | Version compatible | ESLint version is ≥ 8.0.0 |
 | Config format matches | Flat config with ESLint v9, legacy with v8 |
 
@@ -33,7 +33,7 @@ ai-guard doctor
   ✔  ESLint installed
        ESLint 9.1.0
 
-  ✔  eslint-plugin-ai-guard installed
+  ✔  @undercurrent/eslint-plugin-ai-guard installed
        Found in node_modules
 
   ✔  ESLint config present
@@ -57,9 +57,9 @@ ai-guard doctor
 ### Some checks fail:
 
 ```
-  ✖  eslint-plugin-ai-guard installed
+  ✖  @undercurrent/eslint-plugin-ai-guard installed
        Not found in node_modules
-       → Fix: npm install --save-dev eslint-plugin-ai-guard
+       → Fix: npm install --save-dev @undercurrent/eslint-plugin-ai-guard
 
   ✖  ESLint config present
        No eslint.config.* or .eslintrc.* found
