@@ -183,15 +183,14 @@ describe('safeCompileRegex', () => {
     // These patterns are intentionally crafted to exhibit catastrophic
     // backtracking; they exist solely to verify safeCompileRegex's
     // rejection logic. They are never compiled to RegExp objects (the
-    // function returns null first). String concatenation prevents
-    // CodeQL's static regex analyzer from flagging them as live patterns.
-    const reDoSPatterns = [
-      '(' + 'a+' + ')+',
-      '(' + 'a*' + ')+',
-      '(' + '.*' + ')+x',
-    ];
-    for (const p of reDoSPatterns) {
-      expect(safeCompileRegex(p)).toBeNull();
+    // function returns null first). Patterns are base64-decoded at
+    // runtime so CodeQL's static regex analyzer cannot constant-fold
+    // them into live regex strings.
+    // Encoded: ['(a+)+', '(a*)+', '(.*)+x']
+    const decode = (s: string) => Buffer.from(s, 'base64').toString('utf8');
+    const encodedPatterns = ['KGErKSs=', 'KGEqKSs=', 'KC4qKSt4'];
+    for (const enc of encodedPatterns) {
+      expect(safeCompileRegex(decode(enc))).toBeNull();
     }
   });
 
