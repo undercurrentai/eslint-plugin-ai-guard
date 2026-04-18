@@ -68,8 +68,28 @@ function loadBaseline(cwd: string): BaselineFile | null {
   if (!fs.existsSync(baselinePath)) return null;
   try {
     const raw = fs.readFileSync(baselinePath, 'utf-8');
-    return JSON.parse(raw) as BaselineFile;
+    const parsed = JSON.parse(raw) as Partial<BaselineFile>;
+    // Validate structural shape — a well-formed JSON file with the wrong keys
+    // (hand-edited, partial write, or older format) would otherwise throw
+    // `TypeError: baseline.entries is not iterable` downstream in
+    // `buildBaselineSet`, bypassing this function's try/catch. Treat anything
+    // not matching the expected shape as "no baseline" and surface a warning.
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof parsed.preset !== 'string' ||
+      !Array.isArray(parsed.entries)
+    ) {
+      log.warn(
+        `Baseline file ${BASELINE_FILE} is malformed — ignoring. Run 'ai-guard baseline --save' to regenerate.`,
+      );
+      return null;
+    }
+    return parsed as BaselineFile;
   } catch {
+    log.warn(
+      `Baseline file ${BASELINE_FILE} could not be parsed — ignoring. Run 'ai-guard baseline --save' to regenerate.`,
+    );
     return null;
   }
 }
@@ -168,6 +188,9 @@ export function registerBaselineCommand(program: Command): void {
       if (mode !== 'strict' && mode !== 'stable') {
         log.error('Invalid --mode. Use strict or stable.');
         process.exit(1);
+        return; // defensive: return after exit so stubbed process.exit (tests/
+                // wrapper harnesses) does not let control fall through to the
+                // scan path with an invalid mode silently downgrading.
       }
 
       log.banner('AI GUARD BASELINE');
@@ -220,13 +243,27 @@ export function registerBaselineCommand(program: Command): void {
         log.info(`Baseline preset: ${chalk.cyan(existingBaseline.preset)}`);
         log.info(`Baseline mode: ${chalk.cyan(existingBaseline.mode ?? 'strict')}`);
         log.info(`Baseline issues: ${chalk.gray(existingBaseline.totalIssues)}`);
+        // Scan with the preset that WROTE the baseline, not the CLI-time flag.
+        // If a user saved with --preset strict and later runs `baseline --check`
+        // without re-specifying --preset, we previously scanned with
+        // `recommended` (the --preset default) — comparing recommended-scan
+        // output against a strict-scan baseline would silently hide any new
+        // strict-only violations (`no-console-in-handler`,
+        // `no-catch-log-rethrow`, `no-duplicate-logic-block`) and report a
+        // false-green "no new issues since baseline".
+        const scanPreset = existingBaseline.preset;
+        if (opts.preset && opts.preset !== scanPreset) {
+          log.warn(
+            `--preset ${chalk.cyan(opts.preset)} ignored: scanning with baseline's preset ${chalk.cyan(scanPreset)} to keep the comparison apples-to-apples.`,
+          );
+        }
         log.blank();
 
         const spinner = ora({ text: 'Scanning for new issues…', color: 'cyan' }).start();
 
         let result: RunResult | undefined;
         try {
-          result = await runEslint({ preset, targetPath: opts.path });
+          result = await runEslint({ preset: scanPreset, targetPath: opts.path });
           spinner.stop();
         } catch (err: unknown) {
           spinner.stop();

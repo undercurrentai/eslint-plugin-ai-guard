@@ -59,6 +59,23 @@ export default [
     expect(patched).toContain('...aiGuard.configs.strict.rules');
   });
 
+  it('patches defineConfig-style flat config arrays', () => {
+    const existing = `
+import { defineConfig } from 'eslint/config';
+import js from '@eslint/js';
+
+export default defineConfig([
+  js.configs.recommended,
+]);
+`;
+
+    const patched = patchFlatConfig(existing, 'security');
+
+    expect(patched).toContain("import aiGuard from '@undercurrent/eslint-plugin-ai-guard';");
+    expect(patched).toContain("'ai-guard': aiGuard");
+    expect(patched).toContain('...aiGuard.configs.security.rules');
+  });
+
   it('does not re-patch a valid legacy-name flat config', () => {
     const existing = `
 import aiGuard from 'eslint-plugin-ai-guard';

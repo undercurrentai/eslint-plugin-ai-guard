@@ -842,6 +842,14 @@ ruleTester.run('require-framework-auth (audit — public route boundary)', requi
       `,
       errors: [{ messageId: 'missingAuth' }],
     },
+    {
+      code: `
+        import express from 'express';
+        const router = express.Router();
+        router.get('/favicon.xyz.png', handler);
+      `,
+      errors: [{ messageId: 'missingAuth' }],
+    },
   ],
   valid: [
     {
@@ -901,6 +909,33 @@ decoratorRuleTester.run('require-framework-auth (audit — member-expression dec
         }
       `,
       errors: [{ messageId: 'missingAuthNestjs' }],
+    },
+  ],
+});
+
+// Regression: a dead inline class inside a Next.js App Router handler — whose
+// method body calls `auth()` — does NOT satisfy the auth requirement because
+// the class is never instantiated. Previously `bodyContainsCallTo` descended
+// into the class method body, found `auth()`, and silently suppressed the
+// missing-auth report.
+const nextjsRuleTester = new RuleTester({
+  languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
+});
+
+nextjsRuleTester.run('require-framework-auth (bug-hunt — dead class method in handler)', requireFrameworkAuth, {
+  valid: [],
+  invalid: [
+    {
+      filename: '/app/api/secret/route.ts',
+      code: `
+        export async function POST(req) {
+          class DeadHelper {
+            async validate() { await auth(); }
+          }
+          return Response.json({ secret: 'x' });
+        }
+      `,
+      errors: [{ messageId: 'missingAuthNextjs' }],
     },
   ],
 });

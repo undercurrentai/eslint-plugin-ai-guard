@@ -150,6 +150,15 @@ function collectStaticText(node: TSESTree.Expression | TSESTree.PrivateIdentifie
     return `${collectStaticText(node.left)} ${collectStaticText(node.right)}`;
   }
 
+  // Template literals embedded in a string-concat tree contribute their static
+  // quasi text (e.g. `SELECT * FROM ${table}` + ' WHERE id = ' + userId) —
+  // without this, the leaf falls through to `getStringLiteralValue` (which
+  // rejects TemplateLiterals) and the SQL keyword pattern never matches,
+  // letting textbook mixed template-plus-concat SQL injection bypass the rule.
+  if (node.type === AST_NODE_TYPES.TemplateLiteral) {
+    return node.quasis.map((q) => q.value.raw).join(' ');
+  }
+
   const literalValue = getStringLiteralValue(node);
   return literalValue ?? '';
 }

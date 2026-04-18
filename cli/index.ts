@@ -75,7 +75,10 @@ process.on('unhandledRejection', (reason: unknown) => {
 process.on('SIGINT', () => {
   log.blank();
   log.info('Cancelled.');
-  process.exit(0);
+  // POSIX convention: processes killed by SIGINT exit 128 + 2 = 130 so parent
+  // shells / CI steps can distinguish user cancellation from successful
+  // completion. Exiting 0 on Ctrl+C makes cancelled runs look green.
+  process.exit(130);
 });
 
 // ─── Parse args ───────────────────────────────────────────────────────────────

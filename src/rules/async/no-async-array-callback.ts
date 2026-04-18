@@ -129,13 +129,22 @@ function isAssignedAndConsumedByPromiseCombinator(
     return false;
   }
 
-  const container = declaration.parent;
+  // Unwrap `export const ... = arr.map(async ...)` so the sibling search walks
+  // the module/block body, not the ExportNamedDeclaration wrapper (whose own
+  // `body` property is undefined). The search anchor is the export node since
+  // that's what appears in the outer body list.
+  let container: TSESTree.Node | undefined = declaration.parent;
+  let anchor: TSESTree.Node = declaration;
+  if (container && container.type === AST_NODE_TYPES.ExportNamedDeclaration) {
+    anchor = container;
+    container = container.parent;
+  }
   if (!container || (container.type !== AST_NODE_TYPES.Program && container.type !== AST_NODE_TYPES.BlockStatement)) {
     return false;
   }
 
   const body = container.body;
-  const declarationIndex = body.findIndex((statement) => statement === declaration);
+  const declarationIndex = body.findIndex((statement) => statement === anchor);
   if (declarationIndex === -1) {
     return false;
   }

@@ -286,6 +286,16 @@ ruleTester.run('require-webhook-signature (bug-hunt — class-based and member r
       `,
       errors: [{ messageId: 'missingWebhookSig' }],
     },
+    // Express chained route form: router.route('/webhook').post(...)
+    // previously bypassed detection because the path is on the .route() call.
+    {
+      code: `
+        router.route('/webhook').post((req, res) => {
+          processEvent(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
   ],
 });
-

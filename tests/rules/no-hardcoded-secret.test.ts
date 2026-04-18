@@ -141,5 +141,29 @@ ruleTester.run('no-hardcoded-secret', noHardcodedSecret, {
       code: `const accessToken = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';`,
       errors: [{ messageId: 'hardcodedSecret' }],
     },
+    // 11. Regression: quoted Property key `{ 'apiKey': '...' }`. Prettier and
+    //     JSON-to-config codegen routinely emit quoted keys; the rule
+    //     previously required Identifier keys and silently skipped these.
+    {
+      code: `const config = { 'apiKey': 'sk-1234567890abcdefghij123' };`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 12. Regression: computed string-literal Property key
+    //     `{ ["apiKey"]: '...' }`.
+    {
+      code: `const config = { ["apiKey"]: 'sk-1234567890abcdefghij123' };`,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
+    // 13. Regression: bracketed AssignmentExpression `obj['apiKey'] = '...'`.
+    //     The AssignmentExpression branch previously rejected any non-
+    //     Identifier member property, so dynamic-config code using
+    //     bracket notation was not flagged.
+    {
+      code: `
+        const obj = {};
+        obj['apiKey'] = 'sk-1234567890abcdefghij123';
+      `,
+      errors: [{ messageId: 'hardcodedSecret' }],
+    },
   ],
 });

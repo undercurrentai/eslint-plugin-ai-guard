@@ -208,5 +208,23 @@ ruleTester.run('no-floating-promise', noFloatingPromise, {
       `,
       errors: [{ messageId: 'floatingPromise' }],
     },
+    // 11. Regression: an outer async helper whose only try/catch lives inside
+    //     a NESTED function body does not "handle its own errors" — calling
+    //     it fire-and-forget is still a floating promise. Previously
+    //     `nodeHasCatchClause` descended into nested function bodies and saw
+    //     the inner try/catch, silently suppressing the report on the outer
+    //     call because the rule treated the outer as having internal
+    //     error handling.
+    {
+      code: `
+        async function outerWithNestedCatch() {
+          setTimeout(() => {
+            try { doSomething(); } catch (e) {}
+          }, 1000);
+        }
+        outerWithNestedCatch();
+      `,
+      errors: [{ messageId: 'floatingPromise' }],
+    },
   ],
 });

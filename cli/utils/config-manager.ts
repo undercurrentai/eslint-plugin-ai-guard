@@ -149,14 +149,26 @@ export function patchFlatConfig(existing: string, preset: Preset): string {
     patched = importLine + patched;
   }
 
-  // Insert rule block before the closing `];` of the export default array
-  const lastBracket = patched.lastIndexOf('];');
-  if (lastBracket !== -1) {
+  // Insert rule block before the closing of the top-level config array.
+  // Support both:
+  // - `export default [ ... ];`
+  // - `export default defineConfig([ ... ]);`
+  const arrayCloseMatch = findConfigArrayClose(patched);
+  if (arrayCloseMatch !== null) {
     patched =
-      patched.slice(0, lastBracket) + rulesBlock + patched.slice(lastBracket);
+      patched.slice(0, arrayCloseMatch) +
+      rulesBlock +
+      patched.slice(arrayCloseMatch);
   }
 
   return patched;
+}
+
+function findConfigArrayClose(src: string): number | null {
+  const matches = Array.from(src.matchAll(/\](\))?\s*;?/g));
+  if (matches.length === 0) return null;
+  const last = matches[matches.length - 1];
+  return last.index ?? null;
 }
 
 /** Find index just after the last `import … from '…';` line */

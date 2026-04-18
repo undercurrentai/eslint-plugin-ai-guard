@@ -221,8 +221,18 @@ export const AST_SKIP_KEYS = new Set([
 // false positive (dead code). Arrow functions and function expressions are
 // commonly passed as callbacks (await, .then, transaction, etc.) so we DO
 // descend into those. This is a pragmatic trade-off; see security audit H1.
-export const STOP_DESCENT_NODE_TYPES = new Set([
+//
+// Classes follow the same "declared but not invoked" reasoning: a method
+// defined on an inline unused class inside a handler body is dead code, and
+// satisfying the rule by finding `auth()` / `authorize()` / webhook-verify
+// inside it is a FN. NestJS decorator-based detection uses a separate path
+// (ClassDeclaration visitor + hasDecoratorNamed), so stopping descent here
+// does not affect it.
+export const STOP_DESCENT_NODE_TYPES = new Set<string>([
   AST_NODE_TYPES.FunctionDeclaration,
+  AST_NODE_TYPES.ClassDeclaration,
+  AST_NODE_TYPES.ClassExpression,
+  AST_NODE_TYPES.MethodDefinition,
 ]);
 
 function walkForCall(

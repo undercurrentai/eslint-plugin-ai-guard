@@ -71,9 +71,9 @@ const DEFAULT_PUBLIC_ROUTE_PATTERNS = [
   /^\/public(\/|$)/,
   /^\/assets(\/|$)/,
   /^\/static(\/|$)/,
-  /^\/favicon(\/|$|\.)/,
-  /^\/robots(\/|$|\.)/,
-  /^\/sitemap(\/|$|\.)/,
+  /^\/favicon(\/|$|\.ico$)/,
+  /^\/robots(\/|$|\.txt$)/,
+  /^\/sitemap(\/|$|\.xml$)/,
   /^\/\.well-known(\/|$)/,
 ];
 

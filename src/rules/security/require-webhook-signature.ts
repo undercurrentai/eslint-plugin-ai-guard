@@ -258,6 +258,27 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
       return null;
     }
 
+    function getRoutePathFromChain(start: TSESTree.Node): string | null | undefined {
+      let current: TSESTree.Node = start;
+      while (current.type === AST_NODE_TYPES.CallExpression) {
+        if (
+          current.callee.type !== AST_NODE_TYPES.MemberExpression ||
+          current.callee.property.type !== AST_NODE_TYPES.Identifier
+        ) {
+          return undefined;
+        }
+
+        const propName = current.callee.property.name;
+        if (propName === 'route') {
+          return current.arguments[0] ? getPathString(current.arguments[0]) : null;
+        }
+
+        if (!HTTP_METHODS.has(propName)) return undefined;
+        current = current.callee.object;
+      }
+      return undefined;
+    }
+
     return {
       CallExpression(node) {
         getImports();
@@ -268,9 +289,18 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
         if (!HTTP_METHODS.has(methodName)) return;
 
         const args = node.arguments;
-        if (args.length < 2) return;
+        let pathStr: string | null = null;
+        let firstHandlerArgIndex = 1;
+        const inheritedPath = getRoutePathFromChain(node.callee.object);
+        if (inheritedPath !== undefined) {
+          if (args.length < 1) return;
+          pathStr = inheritedPath;
+          firstHandlerArgIndex = 0;
+        } else {
+          if (args.length < 2) return;
+          pathStr = getPathString(args[0]);
+        }
 
-        const pathStr = getPathString(args[0]);
         const routeIsWebhook = pathStr
           ? isWebhookRoute(pathStr)
           : isWebhookFile();
@@ -282,7 +312,7 @@ export const requireWebhookSignature = createRule<Options, 'missingWebhookSig'>(
         // latter is common in AI-codegen and previously bypassed the rule
         // entirely (e.g., `(req, res) => res.status(200).end()` on a
         // webhook route silently passed).
-        for (let i = args.length - 1; i >= 1; i--) {
+        for (let i = args.length - 1; i >= firstHandlerArgIndex; i--) {
           const arg = args[i];
           if (
             arg.type === AST_NODE_TYPES.FunctionExpression ||

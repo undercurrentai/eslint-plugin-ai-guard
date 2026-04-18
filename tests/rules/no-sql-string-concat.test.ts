@@ -115,5 +115,14 @@ ruleTester.run('no-sql-string-concat', noSqlStringConcat, {
       code: 'prisma.$queryRawUnsafe(`SELECT * FROM ${table}`);',
       errors: [{ messageId: 'sqlStringConcat' }],
     },
+    // 11. Regression: mixed template-literal + string-concat at sink.
+    //     `collectStaticText` previously returned '' for any TemplateLiteral
+    //     leaf, so SQL keywords embedded in a template plus untrusted
+    //     concat (the canonical mixed-form SQL injection) escaped detection.
+    {
+      code:
+        'db.query(`SELECT * FROM ${table}` + " WHERE id = " + userId);',
+      errors: [{ messageId: 'sqlStringConcat' }],
+    },
   ],
 });

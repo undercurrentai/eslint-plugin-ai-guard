@@ -140,12 +140,13 @@ export const noHardcodedSecret = createRule({
         });
       },
 
-      // Also check: obj.secret = 'literal_value'
+      // Also check: obj.secret = 'literal_value' (including quoted / bracket
+      // forms like obj['secret'] = '...', obj["apiKey"] = '...').
       AssignmentExpression(node) {
         if (node.left.type !== AST_NODE_TYPES.MemberExpression) return;
-        if (node.left.property.type !== AST_NODE_TYPES.Identifier) return;
 
-        const propName = node.left.property.name;
+        const propName = getStaticMemberPropertyName(node.left);
+        if (!propName) return;
         if (!isSecretName(propName)) return;
 
         const value = getStringValue(node.right);
@@ -164,12 +165,16 @@ export const noHardcodedSecret = createRule({
         });
       },
 
-      // Check property assignments in object literals: { secret: 'value' }
+      // Check property assignments in object literals. Accept both bare
+      // Identifier keys `{ secret: 'value' }` and string-Literal keys
+      // `{ 'apiKey': 'sk-...' }` / `{ ["apiKey"]: '...' }`. Prettier / JSON-to-
+      // config codegen routinely quotes keys, and skipping that form lets
+      // placeholder credentials slip into version control.
       Property(node) {
-        if (node.key.type !== AST_NODE_TYPES.Identifier) return;
+        const propName = getStaticObjectPropertyKey(node);
+        if (!propName) return;
         if (isRuleMetaMessagesProperty(node)) return;
 
-        const propName = node.key.name;
         if (!isSecretName(propName)) return;
 
         const value = getStringValue(node.value as TSESTree.Expression);
@@ -190,6 +195,38 @@ export const noHardcodedSecret = createRule({
     };
   },
 });
+
+/**
+ * Return the static string name of an object-literal Property key, accepting
+ * both bare Identifier (`{ foo: bar }`) and string-Literal (`{ 'foo': bar }`
+ * or `{ ['foo']: bar }`) forms. Returns null for computed keys that resolve at
+ * runtime (`{ [dynamicKey]: bar }`) since we can't know the key name statically.
+ */
+function getStaticObjectPropertyKey(node: TSESTree.Property): string | null {
+  if (!node.computed && node.key.type === AST_NODE_TYPES.Identifier) {
+    return node.key.name;
+  }
+  if (node.key.type === AST_NODE_TYPES.Literal && typeof node.key.value === 'string') {
+    return node.key.value;
+  }
+  return null;
+}
+
+/**
+ * Return the static string name of a MemberExpression's property, accepting
+ * both bare Identifier (`obj.foo`) and string-Literal computed
+ * (`obj['foo']`, `obj["foo"]`) forms. Returns null for computed keys resolved
+ * at runtime (`obj[dynamicKey]`).
+ */
+function getStaticMemberPropertyName(node: TSESTree.MemberExpression): string | null {
+  if (!node.computed && node.property.type === AST_NODE_TYPES.Identifier) {
+    return node.property.name;
+  }
+  if (node.property.type === AST_NODE_TYPES.Literal && typeof node.property.value === 'string') {
+    return node.property.value;
+  }
+  return null;
+}
 
 function getStringValue(node: TSESTree.Expression): string | null {
   if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string') {

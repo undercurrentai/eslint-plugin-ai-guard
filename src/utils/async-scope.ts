@@ -44,8 +44,24 @@ export function isAstNode(value: unknown): value is TSESTree.Node {
 }
 
 /**
+ * Function-scope boundary types. When `nodeHasCatchClause` encounters one of
+ * these as a CHILD of the search node, it stops descent: a try/catch inside a
+ * nested function / arrow / method body handles that inner function's errors,
+ * not the outer scope's. Without this guard, `no-floating-promise` would treat
+ * `async function foo() { setTimeout(() => { try{}catch{} }, 1); fetch('/x'); }`
+ * as "foo handles its own errors" and silently allow the floating `fetch`.
+ * Mirrors `STOP_DESCENT_NODE_TYPES` in framework-detectors.ts.
+ */
+const FUNCTION_SCOPE_BOUNDARY_TYPES = new Set<string>([
+  AST_NODE_TYPES.FunctionDeclaration,
+  AST_NODE_TYPES.FunctionExpression,
+  AST_NODE_TYPES.ArrowFunctionExpression,
+]);
+
+/**
  * True when `node` is a catch-handler-bearing TryStatement, or contains one via
- * structural descent. Caller must not pass function-bodies they don't own.
+ * structural descent within the SAME function scope. Caller must not pass
+ * function-bodies they don't own.
  */
 export function nodeHasCatchClause(node: TSESTree.Node): boolean {
   if (node.type === AST_NODE_TYPES.TryStatement && !!node.handler) {
@@ -57,14 +73,22 @@ export function nodeHasCatchClause(node: TSESTree.Node): boolean {
 
     if (Array.isArray(value)) {
       for (const item of value) {
-        if (isAstNode(item) && nodeHasCatchClause(item)) {
+        if (
+          isAstNode(item) &&
+          !FUNCTION_SCOPE_BOUNDARY_TYPES.has(item.type) &&
+          nodeHasCatchClause(item)
+        ) {
           return true;
         }
       }
       continue;
     }
 
-    if (isAstNode(value) && nodeHasCatchClause(value)) {
+    if (
+      isAstNode(value) &&
+      !FUNCTION_SCOPE_BOUNDARY_TYPES.has(value.type) &&
+      nodeHasCatchClause(value)
+    ) {
       return true;
     }
   }

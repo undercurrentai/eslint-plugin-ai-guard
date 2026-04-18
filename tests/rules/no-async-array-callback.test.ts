@@ -91,6 +91,19 @@ ruleTester.run('no-async-array-callback', noAsyncArrayCallback, {
         const cleaned = arr.map(normalize);
       `,
     },
+    // 17. Regression: a module-level `export const x = arr.map(async ...)`
+    //     consumed on the next line by Promise.all() is valid — previously
+    //     `isAssignedAndConsumedByPromiseCombinator` bailed because the
+    //     VariableDeclaration's parent was `ExportNamedDeclaration`, not
+    //     `Program` / `BlockStatement`, so the escape hatch missed a common
+    //     idiomatic module-level pattern and fired a false positive.
+    {
+      code: `
+        const arr = [1, 2, 3];
+        export const tasks = arr.map(async (item) => transform(item));
+        await Promise.all(tasks);
+      `,
+    },
   ],
   invalid: [
     // 1. async arrow in map
