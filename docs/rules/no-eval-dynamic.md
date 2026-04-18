@@ -6,7 +6,9 @@
 
 ## What it does
 
-Flags calls to `eval()` or `new Function()` where the argument is not a string literal — i.e., where any variable, expression, or template literal with dynamic content is passed.
+Flags calls to `eval()`, `new Function()`, or bare `Function()` (without `new`) where any argument is not a string literal — i.e., where any variable, expression, or dynamic template literal is passed.
+
+Both constructor forms are covered because ECMA-262 defines them identically: `Function('return x + 1')` and `new Function('return x + 1')` produce the same executable function bound to the global scope. AI-generated examples sometimes drop the `new`, and the rule would previously only hook `new Function(...)`. `window.Function(...)` and `globalThis.Function(...)` are also covered.
 
 ## Why it matters
 

@@ -23,6 +23,31 @@
 
 **Why**: The CLI does not import the plugin's `configs` object — it ships its own `RECOMMENDED_RULES` / `STRICT_RULES` / `SECURITY_RULES` constants and runs ESLint programmatically with them. Drift between the plugin presets and CLI maps means `npx ai-guard run --strict` reports different findings than ESLint with `aiGuard.configs.strict.rules`. The `framework` and `compat` presets are deliberately NOT mirrored (CLI exposes only the 3 via `--preset`).
 
-**How to apply**: Every preset-severity edit in `src/configs/{recommended,strict,security}.ts` must land in the same commit as the matching edit in `cli/utils/eslint-runner.ts:77-114`. Treat the file pair as atomic. PRs that touch one without the other should fail review.
+**How to apply**: Every preset-severity edit in `src/configs/{recommended,strict,security}.ts` must land in the same commit as the matching edit in `cli/utils/eslint-runner.ts:77-114`. Treat the file pair as atomic. PRs that touch one without the other should fail review. `tests/configs/mirror.test.ts` (added 2026-04-18) enforces this as a Vitest assertion — any severity drift on active (error/warn) rules fails the suite.
 
-**Source**: `cli/utils/eslint-runner.ts:71-114` (header comment "kept in sync with src/configs/recommended.ts"), `CONTRIBUTING.md` step 4.
+**Source**: `cli/utils/eslint-runner.ts:71-114` (header comment "kept in sync with src/configs/recommended.ts"), `CONTRIBUTING.md` step 4, `tests/configs/mirror.test.ts`.
+
+## L004 — AST-shape-under-matching is a recurring regression class
+
+**Why**: Rules are frequently written to match the single most common AST shape of a pattern, then quietly miss equivalent shapes. Cycle 1 of quality-gate (2026-04-18) surfaced 7 instances in one pass:
+- Identifier-only property keys (missed quoted `{ 'apiKey': '...' }` and bracketed `obj['apiKey'] = '...'`)
+- `new Function()`-only constructor hook (missed bare `Function()` without `new` — same RCE, per ECMA-262)
+- `BinaryExpression '+'`-only concat traversal (missed mixed template-literal + concat SQL injection)
+- `[...];`-only array-close detection (missed `export default defineConfig([...]);`)
+- `FunctionDeclaration`-only STOP_DESCENT (dead-class-method bodies still satisfied framework-auth checks)
+- Nested-function descent in `nodeHasCatchClause` (inner try/catch suppressed outer floating-promise report)
+- Unanchored `(\/|$|\.)` route-extension regex (matched `/favicon.xyz.png` as public)
+
+Each individual bug is small. As a *class*, it's the single largest FN/FP source in this codebase.
+
+**How to apply**: When writing or reviewing a rule visitor that conditions on an AST shape, enumerate all equivalent shapes AI-codegen can produce:
+1. Keys: Identifier vs string-Literal; `node.computed` true vs false; bracket vs dot member.
+2. Constructors: `new X(...)` vs `X(...)` vs `globalThis.X(...)` / `window.X(...)`.
+3. Bodies: `BlockStatement` vs concise-arrow expression body vs `ChainExpression` wrapper vs `TSAsExpression` / `TSTypeAssertion` / `TSNonNullExpression` / `TSSatisfiesExpression` wrappers.
+4. Routes: direct `.METHOD()` vs chained `.route().METHOD()` vs options-object `.route({...})` vs Hono-multi-method `.on([...])`.
+5. Descent: class-scope (`ClassDeclaration` / `ClassExpression` / `MethodDefinition`) and function-scope (`FunctionDeclaration` / `FunctionExpression` / `ArrowFunctionExpression`) boundaries both matter for "declared but not invoked" detection.
+6. Regexes in public/private path allow-lists: anchor with `(\/|$)` or specific suffix anchors, never bare `(\.)` which matches any dotted suffix.
+
+Use the shared helpers already in `src/utils/framework-detectors.ts` (`getStaticPropKey`, `getPathString`, `getMemberPath`, `unwrapTSExpression`, `STOP_DESCENT_NODE_TYPES`) and `src/utils/async-scope.ts` (`FUNCTION_SCOPE_BOUNDARY_TYPES`) instead of reimplementing shape checks per rule.
+
+**Source**: `CHANGELOG.md` `[Unreleased]` section; cycle 1 commit `4cd0ee9`; `.quality-gate/cycle-1-deferred-findings.md`.

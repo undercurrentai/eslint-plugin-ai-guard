@@ -25,6 +25,10 @@ await db.execute(query);
 const sql = 'SELECT * FROM orders WHERE user_id = ' + userId;
 const results = await connection.query(sql);
 
+// Mixed template + concat — dynamic table name in template, user value concatenated
+// at the sink. Both halves contribute SQL keywords; the rule tracks both.
+db.query(`SELECT * FROM ${table}` + ' WHERE id = ' + userId);
+
 // Builds conditions with user-controlled data
 const whereClause = 'status = ' + req.body.status;
 const fullQuery = `SELECT * FROM products WHERE ${whereClause}`;

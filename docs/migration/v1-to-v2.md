@@ -166,7 +166,7 @@ If your project relies on either pattern, set `assumeGlobalAuth: true` in the ru
 
 ### Detection improvements in v2.0.0-beta.2
 
-After M2 shipped, three rounds of audit + bug-hunt added the following detection improvements (full list in [CHANGELOG](../../CHANGELOG.md)):
+After M2 shipped, three rounds of audit + bug-hunt added the following detection improvements (full list in the [CHANGELOG](https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/CHANGELOG.md)):
 
 - **Express** — `router.route('/x').get(...).post(...)` chained-method form correctly inherits the path
 - **Next.js App Router** — `export const POST = req => doX()` concise-arrow exports detected (in addition to function declarations and block-body arrows)

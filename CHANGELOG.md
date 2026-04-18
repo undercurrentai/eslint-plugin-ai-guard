@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/). The `@undercurrent` fork uses a 2.x lineage independent from the upstream `eslint-plugin-ai-guard` 1.x line.
 
+## [Unreleased]
+
+Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes from a hybrid Codex + Claude sweep.
+
+### Added
+
+- **CLI ↔ configs severity-mirror test** at `tests/configs/mirror.test.ts`. Closes the highest residual risk from the 2026-04-17 CLAUDE.md audit: silent drift between `src/configs/{recommended,strict,security}.ts` rule severities and `cli/utils/eslint-runner.ts` rule maps. The CLI ships its own preset copy (per `tasks/lessons.md` L003), so drift was previously catchable only by user report; the test now fails the suite on any flip.
+
+### Fixed
+
+14 rule/CLI correctness fixes across a quality-gate Phase 2 cycle (3 Codex iterations + 3-partition Claude sweep). Each finding has a regression test.
+
+**Security rule false negatives:**
+
+- `no-hardcoded-secret` now flags quoted-key Property forms (`{ 'apiKey': '...' }`, `{ ["apiKey"]: '...' }`) and bracket-member AssignmentExpressions (`obj['apiKey'] = '...'`). The previous Identifier-only check silently skipped Prettier-quoted / JSON-sourced config shapes.
+- `no-eval-dynamic` now flags bare `Function('code')` and `globalThis.Function('code')` invocations without `new`. Per ECMA-262 / MDN these are semantically identical to `new Function(...)` — both produce executable code from a string in global scope. Related: CVE-2025-55346 (dynamic Function constructor RCE, CVSS 9.8).
+- `no-sql-string-concat` now detects mixed template-literal + string-concat SQL at a sink — `db.query(\`SELECT * FROM ${table}\` + ' WHERE id = ' + userId)` — the canonical OWASP A05:2025 / CWE-89 pattern. `collectStaticText` previously returned empty for any TemplateLiteral leaf inside a concat tree, so the SQL keyword pattern never matched.
+- `require-framework-auth` public-route patterns for `/favicon`, `/robots`, and `/sitemap` are now anchored to their real extensions (`\.ico$`, `\.txt$`, `\.xml$`). Previously `(\/|$|\.)` over-matched any dotted suffix — `/favicon.xyz.png` was silently treated as public and skipped auth.
+- `require-webhook-signature` now dispatches the Express chained-route form `router.route('/webhook').post(...)` (path on the `.route()` call, handler on `.post()`). Previously required `args[0]` to be the path, silently skipping this common shape.
+- Shared `STOP_DESCENT_NODE_TYPES` (`src/utils/framework-detectors.ts`) now includes `ClassDeclaration` / `ClassExpression` / `MethodDefinition`. Same "declared but not invoked" reasoning that already applied to nested `FunctionDeclaration` — prevents the 4 framework-aware rules from being satisfied by dead code inside an inline unused class. NestJS's decorator-based detection uses a separate visitor path and is unaffected.
+
+**Async scope false negatives/positives:**
+
+- `no-floating-promise` correctly reports calls to an outer async helper whose only try/catch lives inside a nested callback body. `nodeHasCatchClause` (`src/utils/async-scope.ts`) previously descended into nested function / arrow / method bodies and saw the inner try/catch, treating the outer as "handles its own errors" — silently suppressing fire-and-forget reports. A `FUNCTION_SCOPE_BOUNDARY_TYPES` stop set now mirrors `STOP_DESCENT_NODE_TYPES`.
+- `no-async-array-callback` no longer false-flags `export const tasks = arr.map(async ...); await Promise.all(tasks);`. The "assigned-then-consumed" escape hatch previously bailed when the declaration's parent was `ExportNamedDeclaration` (whose own `body` is undefined) rather than `Program` / `BlockStatement`.
+
+**CLI correctness:**
+
+- `ai-guard baseline --mode <bogus>` now returns after `process.exit(1)` so stubbed `process.exit` in test harnesses doesn't let control fall through with an invalid mode silently downgrading to strict semantics (same class as v2.0.0-beta.2's round-4 fixes, different location).
+- `ai-guard baseline --check` now scans with the preset recorded on the baseline, not the CLI-time `--preset` flag (default `recommended`). Previously, `baseline --save --preset strict` followed later by `baseline --check` (without re-specifying `--preset`) silently hid every new strict-only violation (`no-console-in-handler`, `no-catch-log-rethrow`, `no-duplicate-logic-block`) behind an apples-to-oranges comparison and reported a false-green "no new issues since baseline." A warn is emitted when `opts.preset` disagrees with the stored baseline preset.
+- `ai-guard baseline` `loadBaseline` now validates structural shape. A well-formed-JSON but wrong-key baseline (hand-edit, partial write, older schema) previously threw `TypeError: baseline.entries is not iterable` downstream in `buildBaselineSet` with no user-facing guidance; now emits a clear "malformed — run --save to regenerate" warning and treats the file as absent.
+- `ai-guard` SIGINT handler now exits `130` (POSIX convention for `128 + SIGINT`) instead of `0`. Cancelled runs no longer look green to parent shells / CI wrappers.
+- `cli/utils/config-manager.ts` `patchFlatConfig` now supports both `export default [ ... ];` and `export default defineConfig([ ... ]);` closing forms via a new `findConfigArrayClose` helper. Previously only found the literal `];`, silently skipping ai-guard rules wiring on the modern `defineConfig`-wrapped flat-config style.
+
+### Internal
+
+- `src/utils/async-scope.ts`: `FUNCTION_SCOPE_BOUNDARY_TYPES` stop set introduced; `nodeHasCatchClause` descent check updated.
+- `src/utils/framework-detectors.ts`: `STOP_DESCENT_NODE_TYPES` widened to include class-scope boundaries.
+- `src/rules/security/no-hardcoded-secret.ts`: new `getStaticObjectPropertyKey` / `getStaticMemberPropertyName` helpers for Identifier + string-Literal key normalization.
+- `src/rules/security/no-eval-dynamic.ts`: new `isFunctionConstructorCallee` helper shared between the `CallExpression` and `NewExpression` visitors.
+- Test count: 632 → 645 (+13 regression tests across 9 test files plus 1 new CLI config-manager test; mirror-drift test adds 5 assertions).
+- Coverage maintained: `src/utils` aggregate 86.66% → 87.25%; no per-file regression.
+- `npm audit` clean: 0 vulnerabilities.
+
 ## [2.0.0-beta.2] — 2026-04-15
 
 Framework-aware auth/authz/webhook-signature trio. The first framework-deep release.

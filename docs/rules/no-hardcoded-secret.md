@@ -8,6 +8,15 @@
 
 Detects string literals assigned to variables with names that suggest they contain secrets: `password`, `secret`, `apiKey`, `token`, `privateKey`, `credential`, `authToken`, and similar patterns.
 
+Covers four binding shapes, so Prettier-quoted or JSON-sourced config objects don't silently slip through:
+
+```typescript
+const apiKey = 'sk-...';            // 1. bare declarator
+obj.apiKey = 'sk-...';              // 2. dot-member assignment
+obj['apiKey'] = 'sk-...';           // 3. bracket-member assignment (quoted)
+const cfg = { 'apiKey': 'sk-...' }; // 4. quoted Property key (also `{ ["apiKey"]: '...' }`)
+```
+
 ## Why it matters
 
 AI tools frequently generate example code with placeholder credentials that look like this:
