@@ -8,6 +8,10 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes from a hybrid Codex + Claude sweep.
 
+### Upstream cross-PRs (dual-track — per CONTRIBUTING.md)
+
+- **[YashJadhav21/eslint-plugin-ai-guard#2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2)** — `fix(no-eval-dynamic): flag bare Function(...) (without new) as code injection` (2026-04-18). Ports cycle-1 fix #2 (RCE FN closure, CVE-2025-55346 class). First courtesy PR back to upstream since the fork began at v1.1.11.
+
 ### Added
 
 - **CLI ↔ configs severity-mirror test** at `tests/configs/mirror.test.ts`. Closes the highest residual risk from the 2026-04-17 CLAUDE.md audit: silent drift between `src/configs/{recommended,strict,security}.ts` rule severities and `cli/utils/eslint-runner.ts` rule maps. The CLI ships its own preset copy (per `tasks/lessons.md` L003), so drift was previously catchable only by user report; the test now fails the suite on any flip.
