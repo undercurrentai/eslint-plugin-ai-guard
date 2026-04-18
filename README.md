@@ -1,7 +1,9 @@
 <p align="center">
   <h1 align="center">@undercurrent/eslint-plugin-ai-guard</h1>
   <p align="center">
-    <strong>🛡️ Framework-deep, AI-risk-focused ESLint policy layer for agent-written JS/TS application code.</strong>
+    <strong>🛡️ Framework-aware security lint for JS/TS routes and webhooks.</strong>
+    <br/>
+    <sub>Missing-auth / missing-authz / unverified-webhook detection across Express, Fastify, Hono, NestJS, and Next.js — where <code>@typescript-eslint</code> and <code>eslint-plugin-security</code> don't reach.</sub>
   </p>
   <p align="center">
     <a href="https://www.npmjs.com/package/@undercurrent/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/v/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="npm version"></a>
@@ -13,9 +15,23 @@
 
 ---
 
-> **Lineage.** Forked from [YashJadhav21/eslint-plugin-ai-guard](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT) at v1.1.11. The `@undercurrent` fork diverges to pursue a framework-deep, AI-risk-focused policy scope: layered secret detection, framework-aware auth/authz/webhook rules, a `.ai-guard/policy.yaml` compiler emitting ESLint + semgrep + SARIF + multi-agent instruction files. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
+> **Lineage.** Forked from [YashJadhav21/eslint-plugin-ai-guard](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT) at v1.1.11. The `@undercurrent` fork extends that surface with the framework-aware trio (auth / authz / webhook signature) and a companion CLI, while contributing framework-agnostic correctness fixes back upstream under our dual-track policy. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
 
-AI-generated code has **1.7× more issues** and **2.74× more security vulnerabilities** than human code ([CodeRabbit 2025](https://www.coderabbit.ai/)). Existing linters catch human mistakes — `ai-guard` catches the patterns AI tools consistently get wrong: empty catch blocks, floating promises, async array misuse, framework-boundary errors (missing auth, unverified webhooks, unsanitized parsing), and more.
+## What this catches that other linters don't
+
+Three rules are the reason this plugin exists:
+
+- **`require-framework-auth`** — flags route handlers with no visible authentication across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. Decorator-aware (`@UseGuards`), options-object-aware (`{ preHandler: [auth] }`), filename-aware (`app/**/route.ts`), chained-route-aware (`router.route('/x').post(auth, ...)`).
+- **`require-framework-authz`** — flags handlers that touch `req.params.id` (or equivalents) with no visible ownership / policy check. Detects CASL `ability.can`, Casbin `enforcer.enforce`, Cerbos `cerbos.checkResource`, Permit.io `permit.check` via import-verified detection.
+- **`require-webhook-signature`** — flags webhook handlers without cryptographic signature verification. Recognizes Stripe (`constructEvent`), GitHub (`crypto.timingSafeEqual`), Svix (`Webhook.verify`), Slack (`createSlackEventAdapter`); filters out receivers that look like general auth (`jwt.verify`) to avoid false positives.
+
+`@typescript-eslint` has none of these. `eslint-plugin-security` has none of these. Semgrep's free JS ruleset covers a subset of the auth case for Express only — not the full breadth. This is the defensible differentiation.
+
+The plugin also ships a broader set of code-quality and security rules (floating promises, empty catches, hardcoded secrets, eval-dynamic, SQL-concat, unsafe-deserialize) that overlap in part with `@typescript-eslint` / `eslint-plugin-security` / ESLint core. Those are useful convenience, but the framework-aware trio is what would be missing from any other stack.
+
+## Why AI-generated code is a common trigger
+
+The rules above fire on any code — human or agent-authored. They happen to fire heavily on AI-generated code because missing auth on new routes, unverified webhook handlers, and skipped ownership checks are three of the most consistent defects in LLM output. CodeRabbit's 2025 study of 470 AI-generated PRs found 1.7× more issues and 2.74× more security vulnerabilities than human code, with a pattern-based failure profile that linters are specifically well-suited to catch ([source](https://www.coderabbit.ai/)). CVE-2025-55346 — unsafe dynamic `Function(...)` constructor RCE (CVSS 9.8, Aug 2025) — is a recent in-the-wild instance of that failure class. The plugin is useful for any security-sensitive codebase; it's *especially* useful if your team is shipping Copilot / Cursor / Claude Code output without a dedicated review.
 
 ## Install
 

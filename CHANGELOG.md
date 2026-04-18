@@ -8,6 +8,16 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes from a hybrid Codex + Claude sweep.
 
+### Changed — positioning
+
+Plugin narrative repositioned around **framework-aware security lint for JS/TS routes and webhooks** (Express 5, Fastify 5, Hono 4, NestJS 11, Next.js 15 App Router) rather than "AI-generated code" as the lede. Rationale: an internal scope audit ([docs/claude/audits/upstream-dual-track-2026-04-18.md](docs/claude/audits/upstream-dual-track-2026-04-18.md) + a rule-by-rule novelty audit) found that the framework-aware trio (`require-framework-auth` / `require-framework-authz` / `require-webhook-signature`) is the irreducible differentiation vs `@typescript-eslint` / `eslint-plugin-security` / Semgrep's free JS ruleset — they have no equivalent breadth. The broader code-quality rules remain useful convenience but are not the justification for installing this plugin over the alternatives.
+
+Changes:
+- `package.json` `description` rewritten; `keywords` refocused on `security` / `auth` / `webhook` / `express` / `fastify` / `hono` / `nestjs` / `nextjs` / `framework` first; AI-tooling keywords demoted to secondary.
+- `README.md` lede rewritten around the framework-aware trio; "AI-generated code has 1.7×…" framing moved to a secondary section that explains why AI-generated code is a common trigger for these rules.
+- `docs/index.md` aligned with the new positioning; `framework` and `security` presets promoted ahead of `recommended` / `strict`.
+- No rule deprecations or behavioral changes in this cycle. `no-eval-dynamic` and `no-hardcoded-secret` were candidates for deprecation in the original plan but cycle-1 added genuinely novel detection to both (bare `Function()` without `new`; quoted / bracket-form property keys) that `eslint-plugin-security` does not cover — so they stay as competitive rules, not duplicates.
+
 ### Upstream cross-PRs (dual-track — per CONTRIBUTING.md)
 
 - **[YashJadhav21/eslint-plugin-ai-guard#2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2)** — `fix(no-eval-dynamic): flag bare Function(...) (without new) as code injection` (2026-04-18). Ports cycle-1 fix #2 (RCE FN closure, CVE-2025-55346 class). First courtesy PR back to upstream since the fork began at v1.1.11.
