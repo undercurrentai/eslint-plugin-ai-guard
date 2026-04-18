@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_meta": {
+    "purpose": "Coordinated policy layer for CLAUDE.md (advisory) — fails closed when Markdown directives are skipped.",
+    "version": "4.0.0",
+    "updated": "2026-04-17",
+    "expires": "2026-10-17",
+    "owner": "@joshuakirby",
+    "mirror_source": "./CLAUDE.md §3 (Hard Stops → deny) and §10 (Refusal Matrix ASK rows → ask). Drift check lives in docs/claude/audits/eslint-plugin-ai-guard.md Lock-Step Dependencies."
+  },
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.npmrc)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/.npmrc)",
+      "Bash(npm publish*)",
+      "Bash(yarn publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push --force-with-lease origin main*)",
+      "Bash(git push origin main --force*)",
+      "Bash(git reset --hard origin/main*)",
+      "Bash(git branch -D main*)"
+    ],
+    "ask": [
+      "Edit(./src/index.ts)",
+      "Write(./src/index.ts)",
+      "Edit(./tsup.config.ts)",
+      "Write(./tsup.config.ts)",
+      "Edit(./cli/utils/eslint-runner.ts)",
+      "Write(./cli/utils/eslint-runner.ts)",
+      "Edit(./package.json)",
+      "Write(./package.json)",
+      "Edit(./.github/workflows/**)",
+      "Write(./.github/workflows/**)",
+      "Edit(./CHANGELOG.md)",
+      "Edit(./CONTRIBUTING.md)",
+      "Edit(./README.md)",
+      "Edit(./src/configs/compat.ts)",
+      "Bash(npm version*)",
+      "Bash(git push origin main*)",
+      "Bash(git tag*)",
+      "Bash(git push --tags*)",
+      "Bash(npm install*)",
+      "Bash(npm uninstall*)",
+      "Bash(npm i *)",
+      "Bash(npm rm*)"
+    ]
+  },
+  "attribution": {
+    "commit": false,
+    "pr": false
+  }
+}
