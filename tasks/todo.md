@@ -16,4 +16,4 @@
 
 ## Done
 
-(empty — initial scaffold 2026-04-17)
+- [x] 2026-04-18 — Add CI mirror-drift guard (`tests/configs/mirror.test.ts`, 5 assertions). Closes audit Self-Red-Team #1 (R=12, highest residual risk): drift between `src/configs/{recommended,strict,security}.ts` and `cli/utils/eslint-runner.ts:77-114` now fails the test suite. Catches severity flips, membership mismatches, unregistered rule IDs, and stray `off` entries in CLI maps. 627 → 632 tests.

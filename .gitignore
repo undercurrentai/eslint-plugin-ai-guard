@@ -29,3 +29,5 @@ test-sample.tsx
 .vscode/
 # bug-hunt scratch dir
 .codex_runs/
+# quality-gate per-run state (lock, checkpoint, mcp-cache, metrics)
+.quality-gate/
