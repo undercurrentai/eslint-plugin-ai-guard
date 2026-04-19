@@ -1,6 +1,6 @@
 # ai-guard run
 
-Scan your project for AI-generated code patterns. This is the most important command — it works with **zero ESLint configuration.**
+Scan your project for missing-auth, missing-authz, unverified-webhook, and related code-quality issues across Express, Fastify, Hono, NestJS, and Next.js. This is the most important command — it works with **zero ESLint configuration.**
 
 ---
 

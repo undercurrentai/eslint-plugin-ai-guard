@@ -2,7 +2,9 @@
 
 This guide covers adopting `ai-guard` on a large existing codebase without disrupting your team or breaking CI.
 
-The challenge: running `ai-guard` on an existing project often reveals hundreds of issues on day one. Most of these are existing problems, not new ones. The goal is to prevent *new* issues while giving the team time to fix existing ones gradually.
+The highest-leverage rules for most teams are the framework-aware trio (`require-framework-auth`, `require-framework-authz`, `require-webhook-signature`) — they catch missing authentication, missing authorization, and unverified webhook signatures across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router. See [Framework Support](./framework-support.md) for the detection matrix. The plugin also ships broader code-quality / async / secret rules that overlap in part with `@typescript-eslint` and `eslint-plugin-security`.
+
+The challenge: running `ai-guard` on an existing project often reveals hundreds of issues on day one. Most of these are existing problems, not new ones. The goal is to prevent *new* issues — especially the security-critical ones flagged by the framework-aware trio — while giving the team time to fix existing ones gradually.
 
 ---
 

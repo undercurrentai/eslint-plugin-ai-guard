@@ -1,6 +1,6 @@
 # Migrating from `eslint-plugin-ai-guard` v1.x to `@undercurrent/eslint-plugin-ai-guard` v2.x
 
-v2.0 is a hard fork of [`YashJadhav21/eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) diverging at upstream v1.1.11. The `@undercurrent` fork drops the general-purpose "AI lint preset" positioning in favor of a **framework-deep, AI-risk-focused policy layer** for agent-written JS/TS application code.
+v2.0 is a hard fork of [`YashJadhav21/eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) diverging at upstream v1.1.11. The `@undercurrent` fork drops the general-purpose "AI lint preset" framing in favor of **framework-aware security lint for JS/TS routes and webhooks** — missing-auth, missing-authz, and unverified-webhook detection across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — with the broader code-quality / async / secret rules retained as supporting surface. The rules fire on any code, human or agent-authored, but are especially effective on AI-generated output because missing auth and unverified webhooks are two of the most consistent LLM defects.
 
 This guide is the migration checklist for users of v1.x.
 

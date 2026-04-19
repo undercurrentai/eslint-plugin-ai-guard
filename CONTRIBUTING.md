@@ -1,6 +1,6 @@
 # Contributing to `@undercurrent/eslint-plugin-ai-guard`
 
-Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT, originally authored by YashJadhav21). We diverged at upstream v1.1.11 to pursue a framework-deep, AI-risk-focused policy scope — see [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
+Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT, originally authored by YashJadhav21). We diverged at upstream v1.1.11 to extend the plugin with **framework-aware security lint for JS/TS routes and webhooks** — the `require-framework-auth` / `require-framework-authz` / `require-webhook-signature` trio across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — plus a companion CLI and deprecation discipline. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md) for the full divergence rationale, and [`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) for how we maintain the upstream relationship.
 
 ## Dual-track contributions
 
@@ -76,10 +76,12 @@ ruleTester.run('my-new-rule', myNewRule, { valid: [...], invalid: [...] });
 ### 4. Register and document
 - Add an import + entry in `src/rules/index.ts`.
 - Add the rule at the intended severity in the appropriate preset (`src/configs/{recommended,strict,security}.ts`).
-- Update the CLI rule maps in `cli/utils/eslint-runner.ts` (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) to keep them in sync with the configs.
+- Update the CLI rule maps in `cli/utils/eslint-runner.ts` (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) to keep them in sync with the configs — **these mirror is enforced by `tests/configs/mirror.test.ts`; any severity drift fails the suite.** See [`tasks/lessons.md#L003`](./tasks/lessons.md) for why this invariant exists.
 - Create `docs/rules/<rule-name>.md` describing intent, examples, and options.
 - Add an entry to `docs/rules/README.md` (the canonical category-organized index) — `docs/rules.md` is a stub that should also be kept current.
 - Update the Vitepress nav if applicable.
+
+> **Guardrail to review**: [`tasks/lessons.md#L004`](./tasks/lessons.md) collects AST-shape-under-matching gotchas accumulated across prior bug-hunt cycles (Identifier-only property keys, `new`-only constructor gates, BlockStatement-only bodies, unanchored path-ext regexes, function-scope boundaries). Skim it before writing a new visitor — it covers six specific shapes that are easy to miss.
 
 ### 5. Deprecating a rule
 We use `meta.deprecated: true` + `meta.replacedBy: [...]` on the rule's `meta`, prefix the user-facing message with `[ai-guard deprecated — use <X>]`, and keep the rule code functional for ≥ 2 minor versions before removal in the next major. The deprecated rule must also be added to `src/configs/compat.ts` (off-only) so users can opt out cleanly. See the 5 rules deprecated in v2.0.0-beta.1 and the 2 rules deprecated in v2.0.0-beta.2 as reference.
