@@ -13,6 +13,8 @@
   </p>
 </p>
 
+> ⚠️ **Pre-release** — `@undercurrent/eslint-plugin-ai-guard` is at `v2.0.0-beta.2` locally and has not yet been published to npm. The npm version / downloads shields above will render as unknown until the first `npm publish` lands. The CI shield tracks `.github/workflows/ci.yml`; until that workflow is explicitly registered in the repo's GitHub Actions settings, only the dynamic CodeQL workflow runs on pushes (status tracked in `tasks/todo.md`). To use the plugin today, clone the repo and `npm link`, or wait for `v2.0.0-beta.3` on npm.
+
 ---
 
 > **Lineage.** Forked from [YashJadhav21/eslint-plugin-ai-guard](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT) at v1.1.11. The `@undercurrent` fork extends that surface with the framework-aware trio (auth / authz / webhook signature) and a companion CLI, while contributing framework-agnostic correctness fixes back upstream under our dual-track policy. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).

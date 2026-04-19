@@ -10,7 +10,7 @@ Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes
 
 ### Changed — positioning
 
-Plugin narrative repositioned around **framework-aware security lint for JS/TS routes and webhooks** (Express 5, Fastify 5, Hono 4, NestJS 11, Next.js 15 App Router) rather than "AI-generated code" as the lede. Rationale: an internal scope audit ([docs/claude/audits/upstream-dual-track-2026-04-18.md](docs/claude/audits/upstream-dual-track-2026-04-18.md) + a rule-by-rule novelty audit) found that the framework-aware trio (`require-framework-auth` / `require-framework-authz` / `require-webhook-signature`) is the irreducible differentiation vs `@typescript-eslint` / `eslint-plugin-security` / Semgrep's free JS ruleset — they have no equivalent breadth. The broader code-quality rules remain useful convenience but are not the justification for installing this plugin over the alternatives.
+Plugin narrative repositioned around **framework-aware security lint for JS/TS routes and webhooks** (Express 5, Fastify 5, Hono 4, NestJS 11, Next.js 15 App Router) rather than "AI-generated code" as the lede. Rationale: an internal scope audit ([`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) + a rule-by-rule novelty audit) found that the framework-aware trio (`require-framework-auth` / `require-framework-authz` / `require-webhook-signature`) is the irreducible differentiation vs `@typescript-eslint` / `eslint-plugin-security` / Semgrep's free JS ruleset — they have no equivalent breadth. The broader code-quality rules remain useful convenience but are not the justification for installing this plugin over the alternatives.
 
 Changes:
 - `package.json` `description` rewritten; `keywords` refocused on `security` / `auth` / `webhook` / `express` / `fastify` / `hono` / `nestjs` / `nextjs` / `framework` first; AI-tooling keywords demoted to secondary.
@@ -20,7 +20,7 @@ Changes:
 
 ### Upstream cross-PRs (dual-track — per CONTRIBUTING.md)
 
-- **[YashJadhav21/eslint-plugin-ai-guard#2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2)** — `fix(no-eval-dynamic): flag bare Function(...) (without new) as code injection` (2026-04-18). Ports cycle-1 fix #2 (RCE FN closure, CVE-2025-55346 class). First courtesy PR back to upstream since the fork began at v1.1.11.
+- **[YashJadhav21/eslint-plugin-ai-guard#2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2)** — `fix(no-eval-dynamic): flag bare Function(...) (without new) as code injection` (2026-04-18). Ports cycle-1 fix #2 (RCE FN closure, CVE-2025-55346 class). First courtesy PR back to upstream since the fork began at v1.1.11. See [`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) for the audit that triggered the enactment and tracks the remaining 4 upstream-scope candidates.
 
 ### Added
 

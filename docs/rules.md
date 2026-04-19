@@ -1,11 +1,12 @@
 # Rules
 
-`@undercurrent/eslint-plugin-ai-guard` currently ships **20 rules** across four categories (13 active + 7 deprecated).
+`@undercurrent/eslint-plugin-ai-guard` currently ships **20 rules** across five categories (13 active + 7 deprecated).
 
 - Error handling
 - Async correctness
-- Security
-- Code quality / logic
+- Security (including the framework-aware trio)
+- Code quality
+- Logic / logic
 
 Use the full reference for per-rule severity, examples, and fix guidance:
 

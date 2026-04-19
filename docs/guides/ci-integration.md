@@ -1,6 +1,6 @@
 # CI Integration
 
-Add `ai-guard` to your CI pipeline to automatically block new AI-generated code issues on every pull request.
+Add `ai-guard` to your CI pipeline to automatically block new missing-auth, missing-authz, unverified-webhook, and related code-quality issues on every pull request. Fires on any code, human or LLM-authored, but is especially catching on AI-generated output.
 
 ---
 

@@ -1,6 +1,6 @@
 # CLI Overview
 
-The `ai-guard` CLI makes it instant to scan any JavaScript or TypeScript project for AI-generated code patterns — with **zero ESLint configuration required.**
+The `ai-guard` CLI makes it instant to scan any JavaScript or TypeScript project for missing-auth / missing-authz / unverified-webhook issues across Express, Fastify, Hono, NestJS, and Next.js — plus related code-quality rules — with **zero ESLint configuration required.**
 
 ---
 
