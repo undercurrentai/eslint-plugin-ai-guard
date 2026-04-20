@@ -1,4 +1,4 @@
-# CI — typecheck + build + test matrix (Node 18/20/22) and a quality gate
+# CI — typecheck + build + test matrix (Node 20/22/24) and a quality gate
 # (lint + docs:build on Node 20). Fires on every push and pull request. See
 # tasks/todo.md + docs/claude/audits/eslint-plugin-ai-guard.md for why this
 # file exists on the default branch but was not auto-registered previously.
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

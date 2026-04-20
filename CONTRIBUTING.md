@@ -16,7 +16,7 @@ Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-gua
    cd eslint-plugin-ai-guard
    git remote add upstream git@github.com:undercurrentai/eslint-plugin-ai-guard.git
    ```
-3. **Install dependencies** (Node ≥ 18):
+3. **Install dependencies** (Node ≥ 20):
    ```sh
    npm install
    ```

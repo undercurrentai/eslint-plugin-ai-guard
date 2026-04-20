@@ -215,7 +215,7 @@ These patterns pass TypeScript and existing linters. `ai-guard` catches them.
 ## Supported Environments
 
 - **ESLint** 9.x (flat config). ESLint 8 legacy config: stay on the upstream `eslint-plugin-ai-guard@1.x`.
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20 (Node 18 is EOL as of 2025-04-30, and `@inquirer/prompts` — used by `ai-guard init-context` / `preset` — requires `node:util`'s `styleText` introduced in Node 20.12.0).
 - **TypeScript** and JavaScript
 
 ## Development

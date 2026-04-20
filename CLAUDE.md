@@ -120,7 +120,7 @@
 
 **Build-before-lint gotcha**: `eslint.config.mjs` imports `./dist/index.mjs` (the plugin dogfoods its own rules). If you change rule code, rebuild before linting.
 
-**CI parity**: `.github/workflows/ci.yml` runs `npm ci → typecheck → build → test` on Node 18/20/22; quality job runs `lint && docs:build` on Node 20.
+**CI parity**: `.github/workflows/ci.yml` runs `npm ci → typecheck → build → test` on Node 20/22/24; quality job runs `lint && docs:build` on Node 20. (Node 18 was in the matrix until 2026-04-20; dropped when the first-ever CI run after workflow registration surfaced `@inquirer/prompts`' Node 20+ requirement via `node:util`'s `styleText`. Node 18 has also been EOL since 2025-04-30.)
 
 ## 7. Research & Documentation Tools
 
@@ -140,7 +140,7 @@
 | Gate | Requirement |
 |---|---|
 | Pre-commit (manual) | `typecheck && test && lint` clean |
-| CI `test` job | Node 18/20/22 matrix: `typecheck && build && test` |
+| CI `test` job | Node 20/22/24 matrix: `typecheck && build && test` |
 | CI `quality` job | Node 20: `lint && docs:build` |
 | Pre-publish | `prepublishOnly` script runs `typecheck && test && lint && build` automatically |
 | Publish gate | Tag push (`v*`) OR GitHub Release event triggers npm publish via OIDC/token |
