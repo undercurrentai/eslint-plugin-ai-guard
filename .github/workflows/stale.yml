@@ -1,3 +1,7 @@
+# Stale-issue / stale-PR sweep — marks at 30 days of inactivity, closes at
+# 44 days (30 + 14). Exempt labels: security, false-positive, pinned. See
+# CLAUDE.md §12 for stale-policy rationale.
+
 name: Mark stale issues
 
 on:

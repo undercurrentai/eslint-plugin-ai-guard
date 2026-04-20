@@ -18,6 +18,14 @@ Changes:
 - `docs/index.md` aligned with the new positioning; `framework` and `security` presets promoted ahead of `recommended` / `strict`.
 - No rule deprecations or behavioral changes in this cycle. `no-eval-dynamic` and `no-hardcoded-secret` were candidates for deprecation in the original plan but cycle-1 added genuinely novel detection to both (bare `Function()` without `new`; quoted / bracket-form property keys) that `eslint-plugin-security` does not cover — so they stay as competitive rules, not duplicates.
 
+### ⚠️ BREAKING — Node floor raised to ≥ 20
+
+- **`engines.node`**: `>=18.0.0` → `>=20.0.0`. Node 18 has been EOL since 2025-04-30. More pressingly: `@inquirer/prompts@^8.4.1` (used by `ai-guard init-context` / `preset`) imports `styleText` from `node:util`, which was introduced in Node 20.12.0 — so the CLI silently failed on Node 18 all along. The newly-enabled CI (below) caught it on the first run; the local dev Node 20 always passed. Practical impact: Node 18 users running `ai-guard init-context` would have hit `SyntaxError: The requested module 'node:util' does not provide an export named 'styleText'`. The plugin itself (rule bodies) likely still ran, but the CLI surface was broken. Raising the floor to the declared reality.
+
+### Internal — CI
+
+- `.github/workflows/ci.yml` and `stale.yml` — added substantive header comments to trigger GitHub Actions workflow-file rescan. The four workflows on main had been committed since PR #2 (2026-04-15) but were not auto-registered — only the dynamic CodeQL workflow fired on pushes. After this change, `CI` (typecheck + build + test on Node 20/22/24, plus lint + docs:build on Node 20) fires on every push and PR for the first time. The first run also caught the Node 18 floor mismatch documented above. `publish.yml` and `release.yml` remain deliberately unregistered pending an owner decision on publish method: (A) local manual first publish, (B) `NPM_TOKEN` secret + `release.yml`, (C) `npm-publish` environment + OIDC trusted publisher + `publish.yml`. See `tasks/todo.md` Watch for the decision track and `~/.claude/plans/workflow-registration-fix.md` for the full analysis.
+
 ### Upstream cross-PRs (dual-track — per CONTRIBUTING.md)
 
 - **[YashJadhav21/eslint-plugin-ai-guard#2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2)** — `fix(no-eval-dynamic): flag bare Function(...) (without new) as code injection` (2026-04-18). Ports cycle-1 fix #2 (RCE FN closure, CVE-2025-55346 class). First courtesy PR back to upstream since the fork began at v1.1.11. See [`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) for the audit that triggered the enactment and tracks the remaining 4 upstream-scope candidates.
