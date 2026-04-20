@@ -6,6 +6,12 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [2.0.0-beta.3] — 2026-04-20
+
+First published release of the `@undercurrent/eslint-plugin-ai-guard` fork (prior `2.0.0-beta.1` / `2.0.0-beta.2` tags existed only locally — the package has never shipped to npm before this release). Contents below represent the accumulated work of the quality-gate hardening cycle, the narrative repositioning, the first dual-track upstream cross-PR, and the Node-floor correction triggered by the newly-live CI.
+
 Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes from a hybrid Codex + Claude sweep.
 
 ### Changed — positioning
