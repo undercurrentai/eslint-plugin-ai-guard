@@ -7,13 +7,13 @@
 
 ## 1. Purpose & Scope
 
-**Is**: a published npm library — an ESLint 9 flat-config plugin (`@undercurrent/eslint-plugin-ai-guard`) plus a companion CLI (`ai-guard`) that flags AI-generated JS/TS anti-patterns (empty catches, floating promises, async-in-array, missing framework auth/authz, unverified webhooks).
+**Is**: an ESLint 9 flat-config plugin (`@undercurrent/eslint-plugin-ai-guard`) plus a companion CLI (`ai-guard`) that delivers **framework-aware security lint for JS/TS routes and webhooks** — missing-auth, missing-authz, and unverified-webhook detection across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — plus a supporting surface of async / error-handling / security / code-quality rules. Framework detection is import-map-, filename-, and decorator-aware; runs at editor speed (no `project: true` / no parserServices). Rules fire on any code, human or agent-authored, but are especially catching on AI-generated output (see `README.md` "Why AI-generated code is a common trigger"). Repository is a fork of `YashJadhav21/eslint-plugin-ai-guard@1.1.11` (MIT), with an active dual-track policy returning framework-agnostic correctness fixes upstream (first courtesy PR: `YashJadhav21/eslint-plugin-ai-guard#2`).
 
-**Is not**: a service, a deployable app, an agent runtime. Contains zero AI/ML code itself — the AI is in the *target* code being linted.
+**Is not**: a service, a deployable app, an agent runtime. Contains zero AI/ML code itself — the AI is in the *target* code being linted. **Not yet on npm** — local tag is `v2.0.0-beta.2`; publish pending CI-workflow-registration fix (see `tasks/todo.md` Watch + `README.md` pre-release banner).
 
 **Entry points**: `dist/index.{js,mjs,d.ts}` (plugin) and `dist/cli/index.js` (CLI binary, shebang). Source: `src/` (plugin) and `cli/` (CLI).
 
-**Consumers**: npm users via `import aiGuard from '@undercurrent/eslint-plugin-ai-guard'` in flat config, or `npx ai-guard {run|init|doctor|preset|ignore|baseline|init-context}`.
+**Consumers** (post-publish): npm users via `import aiGuard from '@undercurrent/eslint-plugin-ai-guard'` in flat config, or `npx ai-guard {run|init|doctor|preset|ignore|baseline|init-context}`. Today (pre-publish): clone + `npm link`, or wait for `v2.0.0-beta.3`.
 
 ## 2. Workflow Orchestration
 
