@@ -13,7 +13,7 @@ The CLI is included in the `@undercurrent/eslint-plugin-ai-guard` package:
 npx ai-guard run
 
 # Or install globally
-npm install -g @undercurrent/eslint-plugin-ai-guard
+npm install -g @undercurrent/eslint-plugin-ai-guard@next
 ai-guard run
 ```
 

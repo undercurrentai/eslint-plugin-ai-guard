@@ -42,12 +42,13 @@ This uses the programmatic ESLint API internally — no `eslint.config.mjs`, no 
 ## Step 2 — Install the Plugin
 
 ```bash
-npm install --save-dev @undercurrent/eslint-plugin-ai-guard
+npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next
 ```
 
 > **Peer dependency:** ESLint ≥ 9.0.0 (flat config) is required. If you don't have it, install it too:
+>
 > ```bash
-> npm install --save-dev eslint @undercurrent/eslint-plugin-ai-guard
+> npm install --save-dev eslint @undercurrent/eslint-plugin-ai-guard@next
 > ```
 >
 > If your project is still on ESLint 8 legacy config, stay on the upstream package (`eslint-plugin-ai-guard@1.x`) until you can migrate to flat config. See the [migration guide](../migration/v1-to-v2.md).
@@ -123,6 +124,7 @@ npx ai-guard doctor
 ```
 
 This checks:
+
 - ESLint is installed
 - Plugin is installed
 - Config is present
