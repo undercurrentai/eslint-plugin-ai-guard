@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-npm i -D @undercurrent/eslint-plugin-ai-guard
+npm i -D @undercurrent/eslint-plugin-ai-guard@next
 ```
 
 ## ESLint 9 Flat Config

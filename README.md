@@ -38,7 +38,7 @@ The rules above fire on any code — human or agent-authored. They happen to fir
 ## Install
 
 ```bash
-npm install --save-dev @undercurrent/eslint-plugin-ai-guard
+npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next
 ```
 
 ## 🚀 Quick Start – CLI (no config needed)
@@ -52,6 +52,7 @@ npx ai-guard init --dry-run
 npx ai-guard doctor       # diagnoses setup issues
 npx ai-guard baseline     # track only *new* issues going forward
 ```
+
 That's it. **Zero configuration required.**
 
 ## 🤖 Set Up AI Agent Rules
@@ -70,6 +71,7 @@ npx ai-guard init-context --all
 ```
 
 This writes:
+
 - `CLAUDE.md` — read automatically by Claude Code
 - `.cursorrules` — read automatically by Cursor
 - `.github/copilot-instructions.md` — read automatically by GitHub Copilot
