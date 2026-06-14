@@ -83,7 +83,7 @@ export function registerDoctorCommand(program: Command): void {
           : 'Not found in node_modules',
         fix: env.pluginInstalled
           ? undefined
-          : 'npm install --save-dev @undercurrent/eslint-plugin-ai-guard',
+          : 'npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next',
       });
 
       // ── Check 3: ESLint config exists ─────────────────────────────────────

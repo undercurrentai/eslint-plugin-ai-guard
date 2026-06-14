@@ -167,7 +167,7 @@ export function registerInitCommand(program: Command): void {
 
       const toInstall: string[] = [];
       if (!env.eslintVersion) toInstall.push('eslint');
-      if (!env.pluginInstalled) toInstall.push('@undercurrent/eslint-plugin-ai-guard');
+      if (!env.pluginInstalled) toInstall.push('@undercurrent/eslint-plugin-ai-guard@next');
 
       if (toInstall.length > 0) {
         log.section('Missing Dependencies');
