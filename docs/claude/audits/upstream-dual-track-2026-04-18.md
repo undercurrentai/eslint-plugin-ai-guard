@@ -136,7 +136,7 @@ Bundle the three security fixes (#1, #2, #3) into a single PR titled something l
 - Cites the concrete AI-codegen trigger pattern
 - Ports the regression test
 - References the CVE/OWASP context where relevant
-- Opens with a short lineage note ("Fix ported from `@undercurrent/eslint-plugin-ai-guard` — we're maintaining a fork under MIT and committed in our CONTRIBUTING.md to sending upstream-scope fixes back. Happy to iterate.")
+- Opens with a short lineage note ("Fix ported from `@undercurrentai/eslint-plugin-ai-guard` — we're maintaining a fork under MIT and committed in our CONTRIBUTING.md to sending upstream-scope fixes back. Happy to iterate.")
 
 Cost: ~1-2 hours of PR-prep work each. Upstream acceptance signal: PR accepted/closed within a week → relationship is healthy; no response → move to Move B.
 

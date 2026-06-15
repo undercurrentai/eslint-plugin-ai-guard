@@ -63,7 +63,7 @@ function normalizePlugin(raw: unknown): AiGuardPlugin {
     return raw as AiGuardPlugin;
   }
   throw new Error(
-    'Could not load @undercurrent/eslint-plugin-ai-guard. Run: npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next',
+    'Could not load @undercurrentai/eslint-plugin-ai-guard. Run: npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next',
   );
 }
 
@@ -202,7 +202,7 @@ async function loadPluginModuleFromCwd(cwd: string): Promise<unknown> {
 
   const detail = lastResolveError instanceof Error ? ` (${lastResolveError.message})` : '';
   throw new Error(
-    `@undercurrent/eslint-plugin-ai-guard is not installed${detail}. Run: npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next`,
+    `@undercurrentai/eslint-plugin-ai-guard is not installed${detail}. Run: npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next`,
   );
 }
 

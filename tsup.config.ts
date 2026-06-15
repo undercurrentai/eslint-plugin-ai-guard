@@ -4,7 +4,7 @@ export default defineConfig([
   // Plugin bundle — CJS + ESM dual output.
   //
   // CJS interop: esbuild's default ESM->CJS wrapper yields `module.exports = {default: plugin}`,
-  // which breaks `const aiGuard = require('@undercurrent/eslint-plugin-ai-guard')` because
+  // which breaks `const aiGuard = require('@undercurrentai/eslint-plugin-ai-guard')` because
   // consumers then have to reach through `.default`. `tsup`'s `cjsInterop: true` is meant
   // to fix this but does not in our case (src has a default export only, as required, yet
   // the option is a no-op in tsup 8.5.x). We manually append `module.exports = module.exports.default`

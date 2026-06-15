@@ -1,4 +1,4 @@
-# Contributing to `@undercurrent/eslint-plugin-ai-guard`
+# Contributing to `@undercurrentai/eslint-plugin-ai-guard`
 
 Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT, originally authored by YashJadhav21). We diverged at upstream v1.1.11 to extend the plugin with **framework-aware security lint for JS/TS routes and webhooks** — the `require-framework-auth` / `require-framework-authz` / `require-webhook-signature` trio across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — plus a companion CLI and deprecation discipline. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md) for the full divergence rationale, and [`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) for how we maintain the upstream relationship.
 

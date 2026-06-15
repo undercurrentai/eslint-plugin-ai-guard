@@ -1,4 +1,4 @@
-# @undercurrent/eslint-plugin-ai-guard
+# @undercurrentai/eslint-plugin-ai-guard
 
 **Framework-aware security lint for JS/TS routes and webhooks.** Missing-auth, missing-authz, and unverified-webhook detection across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — where `@typescript-eslint` and `eslint-plugin-security` don't reach.
 

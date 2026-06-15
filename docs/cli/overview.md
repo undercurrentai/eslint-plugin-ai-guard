@@ -6,14 +6,14 @@ The `ai-guard` CLI makes it instant to scan any JavaScript or TypeScript project
 
 ## Installation
 
-The CLI is included in the `@undercurrent/eslint-plugin-ai-guard` package:
+The CLI is included in the `@undercurrentai/eslint-plugin-ai-guard` package:
 
 ```bash
 # Run without installing (recommended for first use)
 npx ai-guard run
 
 # Or install globally
-npm install -g @undercurrent/eslint-plugin-ai-guard@next
+npm install -g @undercurrentai/eslint-plugin-ai-guard@next
 ai-guard run
 ```
 

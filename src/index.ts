@@ -11,7 +11,7 @@ import framework from './configs/framework';
 // Access named parts via the plugin object: `aiGuard.rules`, `aiGuard.configs.compat`, etc.
 const plugin = {
   meta: {
-    name: '@undercurrent/eslint-plugin-ai-guard',
+    name: '@undercurrentai/eslint-plugin-ai-guard',
     version: '2.0.0-beta.3',
   },
   rules: allRules,

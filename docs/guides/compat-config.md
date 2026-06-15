@@ -29,7 +29,7 @@ Use `compat` when you want a **deterministic, one-line opt-out** from the deprec
 
 ```javascript
 // eslint.config.mjs
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 import tseslint from "typescript-eslint";
 
 export default [
@@ -58,7 +58,7 @@ export default [
 ### Option B: compat-only (for users who maintain custom ai-guard rule maps)
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {

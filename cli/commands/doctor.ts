@@ -83,7 +83,7 @@ export function registerDoctorCommand(program: Command): void {
           : 'Not found in node_modules',
         fix: env.pluginInstalled
           ? undefined
-          : 'npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next',
+          : 'npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next',
       });
 
       // ── Check 3: ESLint config exists ─────────────────────────────────────
@@ -143,7 +143,7 @@ export function registerDoctorCommand(program: Command): void {
           const content = readConfig(env.configPath);
           pluginWired =
             content.includes('ai-guard') ||
-            content.includes('@undercurrent/eslint-plugin-ai-guard');
+            content.includes('@undercurrentai/eslint-plugin-ai-guard');
           isInvalidConfig = isInvalidAiGuardConfig(content);
         } catch (err) {
           readError = err instanceof Error ? err.message : String(err);
@@ -157,7 +157,7 @@ export function registerDoctorCommand(program: Command): void {
             : isInvalidConfig
             ? 'Invalid ai-guard config detected (wrong export usage)'
             : pluginWired
-            ? '@undercurrent/eslint-plugin-ai-guard referenced in config'
+            ? '@undercurrentai/eslint-plugin-ai-guard referenced in config'
             : `Config exists but ai-guard plugin not found in ${path.relative(cwd, env.configPath)}`,
           fix: isInvalidConfig || (!pluginWired && !readError)
             ? 'ai-guard init  (will patch/repair your existing config)'

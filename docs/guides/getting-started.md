@@ -42,13 +42,13 @@ This uses the programmatic ESLint API internally — no `eslint.config.mjs`, no 
 ## Step 2 — Install the Plugin
 
 ```bash
-npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next
+npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next
 ```
 
 > **Peer dependency:** ESLint ≥ 9.0.0 (flat config) is required. If you don't have it, install it too:
 >
 > ```bash
-> npm install --save-dev eslint @undercurrent/eslint-plugin-ai-guard@next
+> npm install --save-dev eslint @undercurrentai/eslint-plugin-ai-guard@next
 > ```
 >
 > If your project is still on ESLint 8 legacy config, stay on the upstream package (`eslint-plugin-ai-guard@1.x`) until you can migrate to flat config. See the [migration guide](../migration/v1-to-v2.md).
@@ -72,7 +72,7 @@ This generates a flat config (`eslint.config.mjs`) with default ignores for `dis
 **`eslint.config.mjs` (ESLint 9 flat config):**
 
 ```javascript
-import aiGuard from '@undercurrent/eslint-plugin-ai-guard';
+import aiGuard from '@undercurrentai/eslint-plugin-ai-guard';
 
 export default [
   {
@@ -103,7 +103,7 @@ npx eslint . --ext .ts,.tsx,.js,.jsx
 
 ## Step 5 — Add to Your Editor
 
-With `@undercurrent/eslint-plugin-ai-guard` in your ESLint config, most editors will pick it up automatically:
+With `@undercurrentai/eslint-plugin-ai-guard` in your ESLint config, most editors will pick it up automatically:
 
 - **VS Code**: Install the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint). Issues appear inline.
 - **Cursor / Windsurf / Zed**: Built-in ESLint support — works automatically.
