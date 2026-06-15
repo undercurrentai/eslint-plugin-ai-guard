@@ -31,7 +31,7 @@ const program = new Command();
 program
   .name('ai-guard')
   .description(
-    'Production-grade CLI for @undercurrent/eslint-plugin-ai-guard\n' +
+    'Production-grade CLI for @undercurrentai/eslint-plugin-ai-guard\n' +
     'Catch AI-generated code issues instantly — no ESLint config required.\n\n' +
     'Quick start:\n' +
     '  npx ai-guard run          Scan current project\n' +

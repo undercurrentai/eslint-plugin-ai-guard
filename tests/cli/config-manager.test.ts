@@ -54,7 +54,7 @@ export default [
 
     const patched = patchFlatConfig(existing, 'strict');
 
-    expect(patched).toContain("import aiGuard from '@undercurrent/eslint-plugin-ai-guard';");
+    expect(patched).toContain("import aiGuard from '@undercurrentai/eslint-plugin-ai-guard';");
     expect(patched).toContain("'ai-guard': aiGuard");
     expect(patched).toContain('...aiGuard.configs.strict.rules');
   });
@@ -71,7 +71,7 @@ export default defineConfig([
 
     const patched = patchFlatConfig(existing, 'security');
 
-    expect(patched).toContain("import aiGuard from '@undercurrent/eslint-plugin-ai-guard';");
+    expect(patched).toContain("import aiGuard from '@undercurrentai/eslint-plugin-ai-guard';");
     expect(patched).toContain("'ai-guard': aiGuard");
     expect(patched).toContain('...aiGuard.configs.security.rules');
   });

@@ -92,7 +92,7 @@
 | **Runtime targets** | Node ≥18 | HIGH (`engines` + CI matrix) |
 | **Test framework** | Vitest + `@typescript-eslint/rule-tester` | HIGH |
 | **Build tool** | tsup 8.x (esbuild + tsc) | HIGH |
-| **Distribution** | npm public (`@undercurrent/eslint-plugin-ai-guard`) | HIGH |
+| **Distribution** | npm public (`@undercurrentai/eslint-plugin-ai-guard`) | HIGH |
 | **CI** | GitHub Actions (3 workflows: ci, publish, release) | HIGH |
 | **MCP integrations** | None local | HIGH |
 | **AWS quarantine signals** | 0 | HIGH |

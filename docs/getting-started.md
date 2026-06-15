@@ -3,13 +3,13 @@
 ## Install
 
 ```bash
-npm i -D @undercurrent/eslint-plugin-ai-guard@next
+npm i -D @undercurrentai/eslint-plugin-ai-guard@next
 ```
 
 ## ESLint 9 Flat Config
 
 ```js
-import aiGuard from '@undercurrent/eslint-plugin-ai-guard';
+import aiGuard from '@undercurrentai/eslint-plugin-ai-guard';
 
 export default [
   {

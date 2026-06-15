@@ -1,19 +1,19 @@
 <p align="center">
-  <h1 align="center">@undercurrent/eslint-plugin-ai-guard</h1>
+  <h1 align="center">@undercurrentai/eslint-plugin-ai-guard</h1>
   <p align="center">
     <strong>🛡️ Framework-aware security lint for JS/TS routes and webhooks.</strong>
     <br/>
     <sub>Missing-auth / missing-authz / unverified-webhook detection across Express, Fastify, Hono, NestJS, and Next.js — where <code>@typescript-eslint</code> and <code>eslint-plugin-security</code> don't reach.</sub>
   </p>
   <p align="center">
-    <a href="https://www.npmjs.com/package/@undercurrent/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/v/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="npm version"></a>
+    <a href="https://www.npmjs.com/package/@undercurrentai/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/v/@undercurrentai/eslint-plugin-ai-guard.svg?style=flat-square" alt="npm version"></a>
     <a href="https://github.com/undercurrentai/eslint-plugin-ai-guard/actions"><img src="https://img.shields.io/github/actions/workflow/status/undercurrentai/eslint-plugin-ai-guard/ci.yml?style=flat-square&label=CI" alt="CI"></a>
-    <a href="https://www.npmjs.com/package/@undercurrent/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/dm/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="downloads"></a>
-    <a href="https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@undercurrent/eslint-plugin-ai-guard.svg?style=flat-square" alt="license"></a>
+    <a href="https://www.npmjs.com/package/@undercurrentai/eslint-plugin-ai-guard"><img src="https://img.shields.io/npm/dm/@undercurrentai/eslint-plugin-ai-guard.svg?style=flat-square" alt="downloads"></a>
+    <a href="https://github.com/undercurrentai/eslint-plugin-ai-guard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@undercurrentai/eslint-plugin-ai-guard.svg?style=flat-square" alt="license"></a>
   </p>
 </p>
 
-> ⚠️ **Pre-release** — `v2.0.0-beta.3` is queued for the first-ever npm publish. The npm version / downloads shields above will render as unknown until publish lands. The CI workflow (`CI` — typecheck + build + test on Node 20/22/24, plus lint + docs:build on Node 20) fires on every push and PR. To use the plugin pre-publish, clone the repo and `npm link`. This banner will be removed from README once `@undercurrent/eslint-plugin-ai-guard@2.0.0-beta.3` is live on npm.
+> ⚠️ **Pre-release** — `v2.0.0-beta.3` is queued for the first-ever npm publish. The npm version / downloads shields above will render as unknown until publish lands. The CI workflow (`CI` — typecheck + build + test on Node 20/22/24, plus lint + docs:build on Node 20) fires on every push and PR. To use the plugin pre-publish, clone the repo and `npm link`. This banner will be removed from README once `@undercurrentai/eslint-plugin-ai-guard@2.0.0-beta.3` is live on npm.
 
 ---
 
@@ -38,7 +38,7 @@ The rules above fire on any code — human or agent-authored. They happen to fir
 ## Install
 
 ```bash
-npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next
+npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next
 ```
 
 ## 🚀 Quick Start – CLI (no config needed)
@@ -181,7 +181,7 @@ const users = await Promise.all(userIds.map(async (id) => {
 #### Flat Config: strict
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {
@@ -194,7 +194,7 @@ export default [
 #### Flat Config: security
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {

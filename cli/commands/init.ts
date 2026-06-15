@@ -109,7 +109,7 @@ async function verifyConfigLoads(
 export function registerInitCommand(program: Command): void {
   program
     .command('init')
-    .description('Configure @undercurrent/eslint-plugin-ai-guard in this project')
+    .description('Configure @undercurrentai/eslint-plugin-ai-guard in this project')
     .option('--preset <name>', 'Preset to use: recommended | strict | security', 'recommended')
     .option('--flat', 'Force flat config format (eslint.config.mjs) regardless of ESLint version')
     .option('--dry-run', 'Preview what would change without writing any files')
@@ -139,9 +139,9 @@ export function registerInitCommand(program: Command): void {
       }
 
       if (env.pluginInstalled) {
-        log.success('@undercurrent/eslint-plugin-ai-guard is installed');
+        log.success('@undercurrentai/eslint-plugin-ai-guard is installed');
       } else {
-        log.warn('@undercurrent/eslint-plugin-ai-guard not found');
+        log.warn('@undercurrentai/eslint-plugin-ai-guard not found');
       }
 
       if (env.configType !== 'none') {
@@ -167,7 +167,7 @@ export function registerInitCommand(program: Command): void {
 
       const toInstall: string[] = [];
       if (!env.eslintVersion) toInstall.push('eslint');
-      if (!env.pluginInstalled) toInstall.push('@undercurrent/eslint-plugin-ai-guard@next');
+      if (!env.pluginInstalled) toInstall.push('@undercurrentai/eslint-plugin-ai-guard@next');
 
       if (toInstall.length > 0) {
         log.section('Missing Dependencies');
@@ -193,7 +193,7 @@ export function registerInitCommand(program: Command): void {
         const { createRequire } = await import('module');
         const { pathToFileURL } = await import('url');
         const req = createRequire(path.join(cwd, '_probe.js'));
-        const resolvedPath = req.resolve('@undercurrent/eslint-plugin-ai-guard');
+        const resolvedPath = req.resolve('@undercurrentai/eslint-plugin-ai-guard');
         const aiGuard = await import(pathToFileURL(resolvedPath).href);
         const plugin = (aiGuard.default || aiGuard) as {
           configs?: Record<string, { rules?: unknown }>;
@@ -426,7 +426,7 @@ export function registerInitCommand(program: Command): void {
           log.blank();
           log.print(`  ${chalk.bold('Fix:')}`);
           log.print(`    1. Check the syntax in ${chalk.cyan(path.relative(cwd, finalConfigPath))}`);
-          log.print(`    2. Make sure ${chalk.cyan('@undercurrent/eslint-plugin-ai-guard')} is installed`);
+          log.print(`    2. Make sure ${chalk.cyan('@undercurrentai/eslint-plugin-ai-guard')} is installed`);
           log.print(`    3. Run ${chalk.cyan('ai-guard doctor')} for full diagnostics`);
           log.blank();
           process.exit(1);

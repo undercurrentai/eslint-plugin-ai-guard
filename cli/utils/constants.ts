@@ -1,13 +1,13 @@
 /**
  * Shared constants for CLI string identity.
  *
- * v2.0.0 introduced the scoped package name `@undercurrent/eslint-plugin-ai-guard`
+ * v2.0.0 introduced the scoped package name `@undercurrentai/eslint-plugin-ai-guard`
  * as a hard fork of upstream `eslint-plugin-ai-guard@1.1.11`. CLI code paths that
  * detect the plugin in a user's project must support BOTH names during the
  * v2.x deprecation window so users mid-migration are not stranded.
  */
 
-export const PLUGIN_NAME = '@undercurrent/eslint-plugin-ai-guard' as const;
+export const PLUGIN_NAME = '@undercurrentai/eslint-plugin-ai-guard' as const;
 export const LEGACY_PLUGIN_NAME = 'eslint-plugin-ai-guard' as const;
 
 /** Ordered list of candidate names for resolution/detection (scoped first). */

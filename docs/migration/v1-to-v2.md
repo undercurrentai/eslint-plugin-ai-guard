@@ -1,4 +1,4 @@
-# Migrating from `eslint-plugin-ai-guard` v1.x to `@undercurrent/eslint-plugin-ai-guard` v2.x
+# Migrating from `eslint-plugin-ai-guard` v1.x to `@undercurrentai/eslint-plugin-ai-guard` v2.x
 
 v2.0 is a hard fork of [`YashJadhav21/eslint-plugin-ai-guard`](https://github.com/YashJadhav21/eslint-plugin-ai-guard) diverging at upstream v1.1.11. The `@undercurrent` fork drops the general-purpose "AI lint preset" framing in favor of **framework-aware security lint for JS/TS routes and webhooks** — missing-auth, missing-authz, and unverified-webhook detection across Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router — with the broader code-quality / async / secret rules retained as supporting surface. The rules fire on any code, human or agent-authored, but are especially effective on AI-generated output because missing auth and unverified webhooks are two of the most consistent LLM defects.
 
@@ -6,7 +6,7 @@ This guide is the migration checklist for users of v1.x.
 
 ## TL;DR
 
-1. Uninstall `eslint-plugin-ai-guard`, install `@undercurrent/eslint-plugin-ai-guard@next`.
+1. Uninstall `eslint-plugin-ai-guard`, install `@undercurrentai/eslint-plugin-ai-guard@next`.
 2. Update `eslint.config.mjs` imports and plugin registrations.
 3. (Optional) Add the `compat` preset and enable the upstream replacements for the 5 deprecated rules.
 4. Run `npx ai-guard run` and confirm diagnostic counts align with your baseline.
@@ -15,7 +15,7 @@ This guide is the migration checklist for users of v1.x.
 
 ```bash
 npm uninstall eslint-plugin-ai-guard
-npm install --save-dev @undercurrent/eslint-plugin-ai-guard@next
+npm install --save-dev @undercurrentai/eslint-plugin-ai-guard@next
 ```
 
 Leaving both installed is fine transiently but will emit duplicate diagnostics. `npx ai-guard doctor` (ships in a later v2 beta) will warn if both are present.
@@ -38,7 +38,7 @@ export default [
 **After (v2.x):**
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {
@@ -72,7 +72,7 @@ The following rules are marked `meta.deprecated: true` in v2.0.0 and will be **r
 Add the `compat` preset and the upstream replacements to your config:
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 import tseslint from "typescript-eslint";
 
 export default [

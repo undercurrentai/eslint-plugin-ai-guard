@@ -1,6 +1,6 @@
 # Framework support
 
-`@undercurrent/eslint-plugin-ai-guard` v2.0.0-beta.2 introduced framework-aware versions of the auth, authorization, and webhook-signature rules. This guide covers what is supported, how detection works, and what to do when the analyzer can't see across files.
+`@undercurrentai/eslint-plugin-ai-guard` v2.0.0-beta.2 introduced framework-aware versions of the auth, authorization, and webhook-signature rules. This guide covers what is supported, how detection works, and what to do when the analyzer can't see across files.
 
 ## Supported frameworks
 
@@ -50,7 +50,7 @@ If you're upgrading from v1.x and want a one-line opt-out of the deprecated rule
 
 ```javascript
 // eslint.config.mjs
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {
@@ -77,7 +77,7 @@ The two old rules (`require-auth-middleware`, `require-authz-check`) are marked 
 For a config that uses **only** the framework-aware rules and has cleanly retired the deprecated ones:
 
 ```javascript
-import aiGuard from "@undercurrent/eslint-plugin-ai-guard";
+import aiGuard from "@undercurrentai/eslint-plugin-ai-guard";
 
 export default [
   {

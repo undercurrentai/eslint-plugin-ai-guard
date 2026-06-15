@@ -1,6 +1,6 @@
 # Rules Reference
 
-All 20 rules provided by `@undercurrent/eslint-plugin-ai-guard`, organized by category.
+All 20 rules provided by `@undercurrentai/eslint-plugin-ai-guard`, organized by category.
 Rules marked **deprecated** continue to emit findings (with `[ai-guard deprecated]` prefix)
 and will be removed in v3.0. Use the listed replacement instead.
 

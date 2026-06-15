@@ -13,7 +13,7 @@
 
 ## L002 — `src/index.ts` is single-default-export ONLY
 
-**Why**: `tsup` 8.5.x's `cjsInterop: true` is a no-op for our entry shape. We manually append `module.exports = module.exports.default` in the CJS output via `tsup.config.ts:27-36`. Adding a named export to `src/index.ts` would survive the build but force CJS consumers to reach through `.default` — silently breaking `const aiGuard = require('@undercurrent/eslint-plugin-ai-guard')`.
+**Why**: `tsup` 8.5.x's `cjsInterop: true` is a no-op for our entry shape. We manually append `module.exports = module.exports.default` in the CJS output via `tsup.config.ts:27-36`. Adding a named export to `src/index.ts` would survive the build but force CJS consumers to reach through `.default` — silently breaking `const aiGuard = require('@undercurrentai/eslint-plugin-ai-guard')`.
 
 **How to apply**: Never add `export const X = ...` or `export { X }` to `src/index.ts`. Expose new surface via the `plugin` object's `rules` / `configs` / `meta`. If you must add a top-level named export, also update the CJS interop footer and add a regression test that `require()`-loads the built `dist/index.js` and asserts `.rules`, `.configs`, `.meta` exist directly (no `.default` reach).
 

@@ -18,7 +18,7 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [2.0.0-beta.3] — 2026-04-20
 
-First published release of the `@undercurrent/eslint-plugin-ai-guard` fork (prior `2.0.0-beta.1` / `2.0.0-beta.2` tags existed only locally — the package has never shipped to npm before this release). Contents below represent the accumulated work of the quality-gate hardening cycle, the narrative repositioning, the first dual-track upstream cross-PR, and the Node-floor correction triggered by the newly-live CI.
+First published release of the `@undercurrentai/eslint-plugin-ai-guard` fork (prior `2.0.0-beta.1` / `2.0.0-beta.2` tags existed only locally — the package has never shipped to npm before this release). Contents below represent the accumulated work of the quality-gate hardening cycle, the narrative repositioning, the first dual-track upstream cross-PR, and the Node-floor correction triggered by the newly-live CI.
 
 Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes from a hybrid Codex + Claude sweep.
 
@@ -182,11 +182,11 @@ Framework-aware auth/authz/webhook-signature trio. The first framework-deep rele
 
 ## [2.0.0-beta.1] — 2026-04-15
 
-First beta of the `@undercurrent/eslint-plugin-ai-guard` fork. Diverges from upstream `YashJadhav21/eslint-plugin-ai-guard@1.1.11`.
+First beta of the `@undercurrentai/eslint-plugin-ai-guard` fork. Diverges from upstream `YashJadhav21/eslint-plugin-ai-guard@1.1.11`.
 
 ### ⚠️  BREAKING
 
-- **Package renamed.** `eslint-plugin-ai-guard` → `@undercurrent/eslint-plugin-ai-guard`. Update imports in your flat config. The plugin-registration key (`"ai-guard"`) is unchanged.
+- **Package renamed.** `eslint-plugin-ai-guard` → `@undercurrentai/eslint-plugin-ai-guard`. Update imports in your flat config. The plugin-registration key (`"ai-guard"`) is unchanged.
 - **ESLint 8 legacy config dropped.** v2.x supports ESLint 9 flat config only. Stay on upstream `eslint-plugin-ai-guard@1.x` if you need ESLint 8 support.
 - **5 rules deprecated** (removed in v3.0.0). Replaced by superior upstream rules:
   - `ai-guard/no-await-in-loop` → ESLint core `no-await-in-loop`

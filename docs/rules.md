@@ -1,6 +1,6 @@
 # Rules
 
-`@undercurrent/eslint-plugin-ai-guard` currently ships **20 rules** across five categories (13 active + 7 deprecated).
+`@undercurrentai/eslint-plugin-ai-guard` currently ships **20 rules** across five categories (13 active + 7 deprecated).
 
 - Error handling
 - Async correctness
