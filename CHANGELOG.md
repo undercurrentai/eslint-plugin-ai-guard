@@ -6,7 +6,15 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [Unreleased]
 
-_No changes yet._
+### Fixed
+
+- **`no-unsafe-deserialize`**: closed four hand-verified false-negative classes surfaced by dogfooding our own AFA engine against the rule's source.
+  - **Coercion-wrapping bypass** — `JSON.parse(String(req.body))` and `JSON.parse(req.body.toString())` are now detected; no-op `String(...)` / `.toString()` wrappers are unwrapped before the untrusted-source check.
+  - **Browser taint sources** — added `document.URL`, `document.referrer`, `location.href`, and bare `location.hash` / `location.search` (previously only `window.location.hash` / `window.location.search` were covered).
+  - **Tainted-property access** — a property read off an already-untrusted source (`req.body.data`) is now flagged via member-chain recursion.
+  - **One-level `const` aliasing** — `const b = req.body; JSON.parse(b);` is now flagged via conservative single-definition `const` scope resolution (deliberately restricted to `const` to keep false positives at zero; deeper data-flow taint tracking remains out of scope — see the rule doc's *Known limitations*).
+  - **List-drift fix** — consolidated the previously-duplicated untrusted request-property names into a single source of truth, resolving the `param` vs `params` inconsistency.
+  - 16 new `RuleTester` cases (10 invalid for the new detection + 6 valid false-positive guards); 36 total, all green.
 
 ## [2.0.0-beta.3] — 2026-04-20
 
@@ -19,6 +27,7 @@ Quality-gate hardening cycle: mirror-drift guard + 14 rule/CLI correctness fixes
 Plugin narrative repositioned around **framework-aware security lint for JS/TS routes and webhooks** (Express 5, Fastify 5, Hono 4, NestJS 11, Next.js 15 App Router) rather than "AI-generated code" as the lede. Rationale: an internal scope audit ([`docs/claude/audits/upstream-dual-track-2026-04-18.md`](./docs/claude/audits/upstream-dual-track-2026-04-18.md) + a rule-by-rule novelty audit) found that the framework-aware trio (`require-framework-auth` / `require-framework-authz` / `require-webhook-signature`) is the irreducible differentiation vs `@typescript-eslint` / `eslint-plugin-security` / Semgrep's free JS ruleset — they have no equivalent breadth. The broader code-quality rules remain useful convenience but are not the justification for installing this plugin over the alternatives.
 
 Changes:
+
 - `package.json` `description` rewritten; `keywords` refocused on `security` / `auth` / `webhook` / `express` / `fastify` / `hono` / `nestjs` / `nextjs` / `framework` first; AI-tooling keywords demoted to secondary.
 - `README.md` lede rewritten around the framework-aware trio; "AI-generated code has 1.7×…" framing moved to a secondary section that explains why AI-generated code is a common trigger for these rules.
 - `docs/index.md` aligned with the new positioning; `framework` and `security` presets promoted ahead of `recommended` / `strict`.
