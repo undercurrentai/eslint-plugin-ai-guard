@@ -42,5 +42,38 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Resolve npm dist-tag from version
+        id: disttag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          # Semver: a hyphen in the version CORE marks a prerelease (e.g. 2.0.0-beta.4).
+          # Strip build metadata first (everything after '+') so a hyphen inside it
+          # (e.g. 1.2.3+build-7, a stable release) can't misfire. Prereleases publish to
+          # the `next` dist-tag; stable releases own `latest`.
+          core="${version%%+*}"
+          if [[ "$core" == *-* ]]; then
+            tag=next
+          else
+            tag=latest
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Resolved dist-tag for $version -> $tag"
+          # Guard (release trigger only): the GitHub Release's prerelease flag must agree
+          # with the version's semver prerelease component. Catches a beta tagged as a full
+          # release (would wrongly seize `latest`) or a stable cut marked as a prerelease.
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            if [[ "$tag" == "next" && "$RELEASE_PRERELEASE" != "true" ]]; then
+              echo "::error::Version $version is a prerelease but the GitHub Release is NOT marked pre-release. Mark the release as a pre-release, or cut a stable version."
+              exit 1
+            fi
+            if [[ "$tag" == "latest" && "$RELEASE_PRERELEASE" == "true" ]]; then
+              echo "::error::Version $version is stable but the GitHub Release IS marked pre-release. Uncheck pre-release, or bump to a prerelease version."
+              exit 1
+            fi
+          fi
+
       - name: Publish to npm (OIDC)
-        run: npm publish --provenance --access public --tag next
+        run: npm publish --provenance --access public --tag "${{ steps.disttag.outputs.tag }}"

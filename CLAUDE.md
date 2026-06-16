@@ -108,7 +108,10 @@
 1. Verify `package.json` `version` matches the planned tag.
 2. Run the `prepublishOnly` chain manually: `npm run typecheck && npm run test && npm run lint && npm run build`.
 3. Confirm CHANGELOG `[Unreleased]` is moved to a versioned heading with today's date.
-4. Tag and create a **GitHub Release** (`gh release create v<X.Y.Z> --target main --prerelease`). The `release: published` event fires `publish.yml`, which publishes via OIDC trusted publishing (tokenless, `--provenance --tag next`). `publish.yml` is the sole path (`release.yml` retired 2026-06-16). ⚠️ Before a **stable** (non-prerelease) release, make the `--tag next` hardcode conditional — otherwise `latest` stays pinned to the last beta.
+4. Tag and create a **GitHub Release**, then `publish.yml` (the sole publisher; `release.yml` retired 2026-06-16) publishes via OIDC trusted publishing (tokenless, `--provenance`) and **derives the dist-tag from the version**: a prerelease (`2.0.0-beta.5`) → `next`, a stable version (`2.0.0`) → `latest`.
+   - **Prerelease**: `gh release create v<X.Y.Z-beta.N> --target main --prerelease`
+   - **Stable**: `gh release create v<X.Y.Z> --target main` (omit `--prerelease`)
+   - ⚠️ The Release's pre-release flag **must match** the version: `publish.yml` fails closed if a prerelease version comes from a non-pre-release Release, or a stable version from a pre-release Release. So a stable cut must NOT pass `--prerelease`, and a beta MUST. This is what lets a stable `2.0.0` move `latest` off the last beta.
 
 ## 6. Tooling & Commands
 
