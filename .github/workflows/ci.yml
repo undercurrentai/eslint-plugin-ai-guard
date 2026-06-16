@@ -38,3 +38,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run docs:build
+
+  eslint10:
+    name: eslint@10 compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24          # satisfies eslint@10 engines (^20.19.0 || ^22.13.0 || >=24)
+          cache: 'npm'
+      - run: npm ci
+      - run: npm install --no-save eslint@10   # override the ^9 devDep for this leg only; does not mutate the committed lockfile
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run test
