@@ -13,12 +13,24 @@ Flags route handlers that appear to receive third-party webhook deliveries but n
 
 Recognized verification functions include:
 
-- **Stripe** — `stripe.webhooks.constructEvent(...)`, `Stripe.webhooks.signature.verifyHeader(...)`
-- **GitHub** — `@octokit/webhooks` `webhooks.verify(...)`, `verifyAndReceive(...)`, `crypto.timingSafeEqual(...)` against `x-hub-signature-256`
+- **Stripe** — `stripe.webhooks.constructEvent(...)` / `constructEventAsync(...)`
+- **GitHub** — `@octokit/webhooks` `.verify(...)`, `crypto.timingSafeEqual(...)` against `x-hub-signature-256`
 - **Svix** — `wh.verify(payload, headers)` where `wh` is a `Webhook` instance
-- **Slack** — `verifyRequestSignature(...)`, `SignatureVerification.verify(...)`
+- **Slack** — `createSlackEventAdapter(...)`
+- **Discord** — `verifyKey(...)` (`discord-interactions`, Ed25519)
+- **Clerk** — `verifyWebhook(req)` (`@clerk/backend`)
+- **Square** — `WebhooksHelper.isValidWebhookEventSignature(...)` (distinctive), or `.verifySignature(...)` when the receiver traces to the `square` SDK
+- **SendGrid** — `new EventWebhook().verifySignature(...)` (`@sendgrid/eventwebhook`)
+- **AWS SNS / Linear / others** — `.verify(...)` / `.validate(...)` / `.verifySignature(...)` when the receiver provably traces to a recognized webhook library (`svix`, `@octokit/webhooks`, `@sendgrid/eventwebhook`, `sns-validator`, `square`, `@linear/sdk`, `@clerk/backend`)
+- **Hand-rolled HMAC** (Mailgun, Segment, etc.) — `crypto.createHmac(...)` + `crypto.timingSafeEqual(...)`
+
+> **Not auto-recognized** (add via `verificationFunctions`): **Twilio** (`validateRequest` collides with `express-validator`, so it is not trusted unguarded) and **Shopify** (`shopify.webhooks.validate` needs member-chain-head provenance tracing). See *Known limitations*.
 
 Custom verification function names can be added via `verificationFunctions`.
+
+### How recognition avoids false negatives
+
+Distinctive, webhook-specific method names (`constructEvent`, `verifyKey`, `verifyWebhook`, `isValidWebhookEventSignature`, `timingSafeEqual`) are accepted on sight. **Generic names that collide with general auth/validation** — `verify`, `validate`, `verifySignature` — are accepted **only** when the receiver provably traces to one of the recognized webhook libraries above (via import, `new WebhookCtor()`, a one-hop `const` binding to such a constructor, or an exact distinctive dotted path like `stripe.webhooks.constructEvent`). A bare `verify(token)`, an arbitrary `jwt.verify(...)`, or a `schema.validate(req.body)` (Joi/Zod input validation) therefore does **not** satisfy the rule — preventing the most dangerous failure mode for a security linter: silently accepting non-verification as verification.
 
 ## Why it matters
 
@@ -198,6 +210,12 @@ The rule will not flag handlers in files whose paths match common test-fixture p
 - `.spec.{ts,tsx,js,jsx,cjs,mjs,cts,mts}` file suffix
 
 If you have a real webhook handler under one of these paths (uncommon but possible), the rule will silently skip it. Move the handler to a non-test path or temporarily disable the rule on that file with an `eslint-disable` comment.
+
+## Known limitations
+
+- **Call presence, not result-gating.** The rule confirms a recognized verification call *exists* in the handler body — it cannot prove (at AST level, with no type info or data-flow analysis) that the call's result actually gates the response. A handler that calls a boolean-returning verifier but ignores the result (`webhooks.validate(req.body); res.sendStatus(200);`) is accepted even though it verifies nothing. Throw-on-failure verifiers (Stripe's `constructEvent`) are inherently safer here. Treat a clean rule result as "a verification step is present," not "verification is correctly enforced."
+- **Distinctive-name matching is by name.** The distinctive method names (`constructEvent`, `verifyKey`, `verifyWebhook`, `isValidWebhookEventSignature`, `timingSafeEqual`, …) are accepted on any receiver — forging a local no-op with one of these exact names would satisfy the rule. This is an intentional tradeoff: those names are specific enough that forging them is self-defeating. **Generic verbs** (`verify` / `validate` / `verifySignature`) are *not* matched by name — they require the receiver to provably trace to a recognized webhook library (`svix`, `@octokit/webhooks`, `@sendgrid/eventwebhook`, `sns-validator`, `square`, `@linear/sdk`, `@clerk/backend`) via import, `new Ctor()`, or a one-hop `const x = new Ctor()`.
+- **Not yet auto-recognized:** Twilio (`validateRequest` collides with `express-validator`, so it is not accepted unguarded) and Shopify (`shopify.webhooks.validate` needs member-chain-head provenance tracing). Add these via the `verificationFunctions` option until first-class support lands.
 
 ## A note on Stripe and raw bodies
 
