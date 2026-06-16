@@ -6,8 +6,18 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [Unreleased]
 
+## [2.0.0-beta.4] — 2026-06-16
+
+Formalizes the OIDC trusted-publishing pipeline and carries the `no-unsafe-deserialize` hardening forward under a proper version heading. Published via npm Trusted Publisher (OIDC, no token) from `publish.yml`. The `next` dist-tag advances to `beta.4`; `latest` remains `beta.3`.
+
+### CI / release
+
+- **`publish.yml`**: upgrade the runner's npm to the OIDC-aware line (`npm install -g npm@latest`; npm Trusted Publishing requires npm ≥ 11.5.1). Node 20 ships npm 10.x, which predates trusted-publishing support and would have failed the publish step — this is the change that makes the configured npm trusted publisher actually usable from CI.
+
 ### Fixed
 
+- **`package.json` `exports`**: expose the `./package.json` subpath, resolving `ERR_PACKAGE_PATH_NOT_EXPORTED` for tools and consumers that read the package manifest directly. Additive subpath only — the `.` entry and the single-default-export / CJS-interop invariant are untouched.
+- **`package.json` `repository.url`**: normalized to the canonical `git+https://…​.git` form, silencing npm's publish-time auto-correction warning.
 - **`no-unsafe-deserialize`**: closed four hand-verified false-negative classes surfaced by dogfooding our own AFA engine against the rule's source.
   - **Coercion-wrapping bypass** — `JSON.parse(String(req.body))` and `JSON.parse(req.body.toString())` are now detected; no-op `String(...)` / `.toString()` wrappers are unwrapped before the untrusted-source check.
   - **Browser taint sources** — added `document.URL`, `document.referrer`, `location.href`, and bare `location.hash` / `location.search` (previously only `window.location.hash` / `window.location.search` were covered).

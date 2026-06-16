@@ -12,7 +12,7 @@ import framework from './configs/framework';
 const plugin = {
   meta: {
     name: '@undercurrentai/eslint-plugin-ai-guard',
-    version: '2.0.0-beta.3',
+    version: '2.0.0-beta.4',
   },
   rules: allRules,
   configs: {

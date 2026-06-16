@@ -1,6 +1,6 @@
 {
   "name": "@undercurrentai/eslint-plugin-ai-guard",
-  "version": "2.0.0-beta.3",
+  "version": "2.0.0-beta.4",
   "description": "Framework-aware security lint for JS/TS routes and webhooks (Express, Fastify, Hono, NestJS, Next.js). Missing-auth / missing-authz / unverified-webhook detection where typescript-eslint and eslint-plugin-security don't reach. Especially useful on AI-generated code. Fork of eslint-plugin-ai-guard.",
   "publishConfig": {
     "access": "public",
@@ -33,7 +33,8 @@
     ".": {
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "ai-guard": "dist/cli/index.js"
@@ -86,7 +87,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/undercurrentai/eslint-plugin-ai-guard"
+    "url": "git+https://github.com/undercurrentai/eslint-plugin-ai-guard.git"
   },
   "bugs": {
     "url": "https://github.com/undercurrentai/eslint-plugin-ai-guard/issues"
