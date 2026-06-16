@@ -55,7 +55,7 @@
 - Add a named export to `src/index.ts` (breaks the manual CJS interop footer in `tsup.config.ts:27-36`; consumers `require()` would then need `.default`).
 - Skip `prepublishOnly` (`typecheck && test && lint && build`) before any publish.
 - Force-push to `main`.
-- Downgrade `peerDependencies.eslint` below `^9.0.0` or `engines.node` below `>=18.0.0`.
+- Downgrade `peerDependencies.eslint` below `^9.0.0` or `engines.node` below `>=20.12.0`.
 - Delete a rule file from `src/rules/**` whose entry still exists in `src/configs/compat.ts` (breaks the deprecation soak contract).
 
 ## 4. Standards
@@ -179,7 +179,7 @@
 | Run `npm publish` locally | REFUSE | §3 Out-of-Scope |
 | Force-push to `main` | REFUSE | §3 Hard Stop |
 | Commit secrets / `.env*` / `.pem` / `.key` | REFUSE | §3 Hard Stop |
-| Downgrade peer-dep ESLint <9 or Node <18 | REFUSE | §3 Hard Stop |
+| Downgrade peer-dep ESLint <9 or Node <20.12 | REFUSE | §3 Hard Stop |
 | Delete rule file with live `compat.ts` entry | REFUSE | §3 Hard Stop |
 
 (Mirrored mechanically into `.claude/settings.json` `permissions.deny` / `permissions.ask` — see audit `Lock-Step Dependencies`.)
@@ -195,7 +195,7 @@
 - **Owners**: @joshuakirby (primary). Backup: TBD.
 - **Update triggers**: new rule, rule deprecation, ESLint major bump (10.x widening), `@typescript-eslint/utils` major bump, peer-dep change, `tsup` major bump (esp. CJS interop semantics), CHANGELOG release.
 - **Watch items** (logged 2026-04-17, re-check by 2026-10-17):
-  - ESLint 10.0 (released Feb 2026): flat-config-only, raises Node floor to `^20.19.0 || ^22.13.0 || >=24`. Plugin currently caps at `eslint ^9.0.0` — widen to `^9.0.0 || ^10.0.0` next major.
+  - ESLint 10.0 (released Feb 2026): flat-config-only, raises Node floor to `^20.19.0 || ^22.13.0 || >=24`. ✅ Peer-dep widened to `^9.0.0 || ^10.0.0` (shipped 2026-06-16, see CHANGELOG `[Unreleased]`). Remaining future work: bump `engines.node` `>=20.12.0` → `>=20.19.0` when pairing broadly with eslint@10 (v3.0.0).
   - typescript-eslint issue [#11543](https://github.com/typescript-eslint/typescript-eslint/issues/11543): `RuleCreator`-returned rules type-incompatible with downstream `defineConfig()`. Runtime fine; TS-only. Track upstream resolution before next major.
 - **Audit log**: `docs/claude/audits/eslint-plugin-ai-guard.md`.
 - **Re-audit at expiry**: 2026-10-17.

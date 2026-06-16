@@ -17,7 +17,7 @@ export default defineConfig([
     sourcemap: true,
     splitting: false,
     outDir: 'dist',
-    target: 'node18',
+    target: 'node20',
     external: ['eslint', '@typescript-eslint/utils'],
     esbuildOptions(options, context) {
       // `context.format` is an internal tsup field; fall back to inspecting
@@ -44,7 +44,7 @@ export default defineConfig([
     sourcemap: true,
     splitting: false,
     outDir: 'dist',
-    target: 'node18',
+    target: 'node20',
     external: ['eslint', '@typescript-eslint/parser'],
     tsconfig: 'tsconfig.cli.json',
     banner: {
