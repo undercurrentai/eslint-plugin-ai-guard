@@ -218,6 +218,24 @@ These patterns pass TypeScript and existing linters. `ai-guard` catches them.
 - **Node.js** ≥ 20 (Node 18 is EOL as of 2025-04-30, and `@inquirer/prompts` — used by `ai-guard init-context` / `preset` — requires `node:util`'s `styleText` introduced in Node 20.12.0).
 - **TypeScript** and JavaScript
 
+## Coverage & known limitations
+
+`ai-guard` is deliberately **fast, syntactic, and honest about its edges**. It runs at editor speed — no `project: true`, no type-checker — so it reasons about AST structure and one-hop scope, not full data-flow taint analysis. That keeps it instant on large repos, and it means the boundaries below are real. Knowing them up front is the difference between trusting the tool and disabling it on the first surprise.
+
+**What the framework-aware rules cover today:** REST-style route handlers and webhook receivers in **Express 5, Fastify 5, Hono 4, NestJS 11, and Next.js 15 App Router (`route.ts`)**.
+
+**What they do *not* cover yet** (tracked on the roadmap — these are silent gaps, not detections):
+
+- **Next.js Server Actions (`'use server'`) and `middleware.ts` auth** — only `route.ts` handlers are analyzed.
+- **GraphQL resolvers, tRPC procedures, and Hono RPC** — detection is REST-shaped; resolver/procedure auth is not yet modeled.
+- **Webhook providers beyond Stripe / GitHub / Svix / Slack** — other providers (SendGrid, Twilio, Shopify, etc.) aren't pattern-matched yet, so `require-webhook-signature` won't flag them.
+
+**Cross-file analysis is intentionally limited.** Rules analyze each file in isolation, so a global guard registered elsewhere (NestJS `APP_GUARD`, a root `middleware.ts`, cross-file `router.use(auth)` / Fastify `register`) can look like missing auth. This is by design — to never silently trust auth the rule can't see. Set `assumeGlobalAuth: true` (or add the wrapper to `knownAuthCallers`) when a global gate applies; see each framework rule's **Known limitations** section for the exact escape hatch.
+
+**Name-heuristic trade-off.** `no-unsafe-deserialize` treats a bare identifier whose *name* is in the untrusted set (`body`, `payload`, `data`, …) as untrusted regardless of provenance, so a trusted binding that merely shares one of those names can be over-reported. This is a deliberate bias toward catching real request-body parses; suppress a specific trusted parse inline with `// eslint-disable-next-line no-unsafe-deserialize`.
+
+**Why `recommended` doesn't turn everything to `error`.** The `recommended` preset is **adoption-first**: high-confidence rules are `error`, context-sensitive ones are `warn`/`off`, so dropping the plugin into an existing codebase produces a signal you can act on rather than a wall of red. Use `strict` to raise everything to `error` once you've triaged the baseline. Each rule's doc states its own false-positive boundary — and we [take false-positive reports seriously](#contributing).
+
 ## Development
 
 ```bash
@@ -237,7 +255,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 **False positive reports:** Open an issue using the [False Positive template](https://github.com/undercurrentai/eslint-plugin-ai-guard/issues/new) — we take zero false positives seriously.
 
-**Upstream contributions (dual-track):** This fork also contributes fixes and quality improvements back to the [original upstream repo](https://github.com/YashJadhav21/eslint-plugin-ai-guard) where they align with upstream's scope.
+**Upstream contributions (dual-track):** This fork contributes fixes and quality improvements back to the [original upstream repo](https://github.com/YashJadhav21/eslint-plugin-ai-guard) where they align with upstream's scope — e.g. [upstream #2](https://github.com/YashJadhav21/eslint-plugin-ai-guard/pull/2) (flagging bare `Function(...)` as code injection), merged.
 
 ## License
 
