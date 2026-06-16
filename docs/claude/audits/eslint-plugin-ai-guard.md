@@ -1,6 +1,8 @@
 # CLAUDE.md Audit: eslint-plugin-ai-guard
 
 > Audit Date: 2026-04-17 | Auditor: Claude Opus 4.7 (1M ctx) under v4.0 Auditor Protocol | Version emitted: 4.0.0 | Expires: 2026-10-17
+>
+> ⚠️ **PARTIALLY SUPERSEDED 2026-06-16.** This is a point-in-time snapshot from the v2.0.0-beta.2 era; several environment cells below are now stale (verify against `package.json` / `ci.yml` before trusting them): `engines.node` is **`>=20.12.0`** (not `>=18.0.0`); `peerDependencies.eslint` is **`^9.0.0 || ^10.0.0`** (not `^9.0.0`-only — the ESLint-10 widen shipped, it was not deferred to v3.0.0); the CI matrix is **Node 20/22/24 + a dedicated `eslint10`-on-Node-24 job** (not `18/20/22`); and **`release.yml` was deleted** — `publish.yml` (OIDC) is the sole publisher (the Lock-Step section below already reflects this; the header inventory rows do not). The Lock-Step Dependencies + Recommended SOP sections are current as of 2026-06-16.
 
 ## Audit
 

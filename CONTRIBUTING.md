@@ -11,20 +11,27 @@ Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-gua
 
 1. **Fork** [`undercurrentai/eslint-plugin-ai-guard`](https://github.com/undercurrentai/eslint-plugin-ai-guard) on GitHub.
 2. **Clone your fork locally**:
+
    ```sh
    git clone git@github.com:<your-username>/eslint-plugin-ai-guard.git
    cd eslint-plugin-ai-guard
    git remote add upstream git@github.com:undercurrentai/eslint-plugin-ai-guard.git
    ```
-3. **Install dependencies** (Node ≥ 20):
+
+3. **Install dependencies** (Node ≥ 20.12.0):
+
    ```sh
    npm install
    ```
+
 4. **Build the project**:
+
    ```sh
    npm run build
    ```
+
 5. **Run the full verify loop**:
+
    ```sh
    npm run typecheck && npm test && npm run lint && npm run docs:build
    ```
@@ -34,10 +41,13 @@ Thanks for contributing! This is the Undercurrent fork of [`eslint-plugin-ai-gua
 New rules use `@typescript-eslint/utils`' `RuleCreator` and should stick to AST-level analysis. We avoid requiring `parserServices` / `project: true` by default to keep editor-speed feedback; framework-aware rules use imports + filename + decorator detection via `src/utils/framework-detectors.ts` (added in v2.0.0-beta.2).
 
 ### 1. Identify the AI pattern
+
 What does the AI tool generate that causes issues? (e.g. `catch (e: any)`, un-awaited fetch-prefixed promises, `req.body` into `JSON.parse` without validation.)
 
 ### 2. Scaffold the rule
+
 Create `src/rules/<category>/<rule-name>.ts`:
+
 ```typescript
 import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
@@ -61,7 +71,9 @@ export const myNewRule = createRule({
 ```
 
 ### 3. Add tests
+
 Create `tests/rules/<rule-name>.test.ts`:
+
 ```typescript
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import { myNewRule } from '../../src/rules/<category>/<rule-name>';
@@ -74,6 +86,7 @@ ruleTester.run('my-new-rule', myNewRule, { valid: [...], invalid: [...] });
 ```
 
 ### 4. Register and document
+
 - Add an import + entry in `src/rules/index.ts`.
 - Add the rule at the intended severity in the appropriate preset (`src/configs/{recommended,strict,security}.ts`).
 - Update the CLI rule maps in `cli/utils/eslint-runner.ts` (`RECOMMENDED_RULES`, `STRICT_RULES`, `SECURITY_RULES`) to keep them in sync with the configs — **these mirror is enforced by `tests/configs/mirror.test.ts`; any severity drift fails the suite.** See [`tasks/lessons.md#L003`](./tasks/lessons.md) for why this invariant exists.
@@ -84,6 +97,7 @@ ruleTester.run('my-new-rule', myNewRule, { valid: [...], invalid: [...] });
 > **Guardrail to review**: [`tasks/lessons.md#L004`](./tasks/lessons.md) collects AST-shape-under-matching gotchas accumulated across prior bug-hunt cycles (Identifier-only property keys, `new`-only constructor gates, BlockStatement-only bodies, unanchored path-ext regexes, function-scope boundaries). Skim it before writing a new visitor — it covers six specific shapes that are easy to miss.
 
 ### 5. Deprecating a rule
+
 We use `meta.deprecated: true` + `meta.replacedBy: [...]` on the rule's `meta`, prefix the user-facing message with `[ai-guard deprecated — use <X>]`, and keep the rule code functional for ≥ 2 minor versions before removal in the next major. The deprecated rule must also be added to `src/configs/compat.ts` (off-only) so users can opt out cleanly. See the 5 rules deprecated in v2.0.0-beta.1 and the 2 rules deprecated in v2.0.0-beta.2 as reference.
 
 ## Running tests
