@@ -6,6 +6,10 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [Unreleased]
 
+### CI / release
+
+- **`publish.yml` dist-tag is now derived from the version** instead of hardcoded `--tag next`. A prerelease version (semver with a `-`, e.g. `2.0.0-beta.5`) publishes to `next`; a stable version (e.g. `2.0.0`) publishes to `latest`. Without this, a future stable release would have landed on `next` and left `latest` pinned to the last beta — so `npm install @undercurrentai/eslint-plugin-ai-guard` would have silently resolved to the old prerelease. A guard fails the publish if a GitHub Release's pre-release flag contradicts the version's semver prerelease component (a beta tagged as a full release, or a stable cut marked pre-release). Removed the now-incorrect static `publishConfig.tag: "next"` from `package.json` — the workflow's version-derived `--tag` is the single source of truth.
+
 ## [2.0.0-beta.4] — 2026-06-16
 
 Formalizes the OIDC trusted-publishing pipeline and carries the `no-unsafe-deserialize` hardening forward under a proper version heading. Published via npm Trusted Publisher (OIDC, no token) from `publish.yml`. The `next` dist-tag advances to `beta.4`; `latest` remains `beta.3`.
