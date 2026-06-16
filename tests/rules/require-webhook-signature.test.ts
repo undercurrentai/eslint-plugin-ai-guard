@@ -138,6 +138,88 @@ ruleTester.run('require-webhook-signature', requireWebhookSignature, {
         });
       `,
     },
+    // --- Expanded provider coverage (ship #2) ---
+    // Discord interactions — verifyKey (Ed25519, discord-interactions). Distinctive name.
+    {
+      code: `
+        router.post('/webhook', (req, res) => {
+          const ok = verifyKey(req.rawBody, req.get('X-Signature-Ed25519'), req.get('X-Signature-Timestamp'), PUBLIC_KEY);
+          if (!ok) return res.sendStatus(401);
+          res.sendStatus(200);
+        });
+      `,
+    },
+    // Clerk — verifyWebhook(req). Distinctive name.
+    {
+      code: `
+        import { verifyWebhook } from '@clerk/backend';
+        router.post('/webhook', async (req, res) => {
+          const evt = await verifyWebhook(req);
+          handle(evt);
+          res.sendStatus(200);
+        });
+      `,
+    },
+    // Square — WebhooksHelper.isValidWebhookEventSignature(...). Distinctive name (member).
+    {
+      code: `
+        router.post('/webhook', (req, res) => {
+          const ok = WebhooksHelper.isValidWebhookEventSignature(req.rawBody, sigHeader, key, notificationUrl);
+          if (!ok) return res.sendStatus(403);
+          res.sendStatus(200);
+        });
+      `,
+    },
+    // SendGrid — gated verifySignature; receiver `ew` provenance-traced via the
+    // one-hop `const ew = new EventWebhook()` resolver (@sendgrid/eventwebhook).
+    {
+      code: `
+        import { EventWebhook } from '@sendgrid/eventwebhook';
+        router.post('/webhook', (req, res) => {
+          const ew = new EventWebhook();
+          const ok = ew.verifySignature(publicKey, req.body, signature, timestamp);
+          if (!ok) return res.sendStatus(403);
+          res.sendStatus(200);
+        });
+      `,
+    },
+    // Square — gated verifySignature; receiver `WebhooksHelper` is import-traced to
+    // the `square` SDK (strong provenance, not name-only).
+    {
+      code: `
+        import { WebhooksHelper } from 'square';
+        router.post('/webhook', (req, res) => {
+          const ok = WebhooksHelper.verifySignature({ requestBody: req.body, signatureHeader: sig, signatureKey: key, notificationUrl: url });
+          if (!ok) return res.sendStatus(403);
+          res.sendStatus(200);
+        });
+      `,
+    },
+    // AWS SNS — gated validate accepted ONLY via strong provenance: `const v = new
+    // MessageValidator()` from sns-validator (NOT the name-based fallback, which
+    // deliberately excludes `validate`).
+    {
+      code: `
+        import { MessageValidator } from 'sns-validator';
+        router.post('/webhook', (req, res) => {
+          const v = new MessageValidator();
+          v.validate(req.body, (err) => { if (err) return res.sendStatus(403); res.sendStatus(200); });
+        });
+      `,
+    },
+    // Linear — gated verify; receiver `lw` provenance-traced via `const lw = new
+    // LinearWebhooks()` (@linear/sdk).
+    {
+      code: `
+        import { LinearWebhooks } from '@linear/sdk';
+        router.post('/webhook', (req, res) => {
+          const lw = new LinearWebhooks();
+          const ok = lw.verify(req.rawBody, req.headers['linear-signature']);
+          if (!ok) return res.sendStatus(403);
+          res.sendStatus(200);
+        });
+      `,
+    },
   ],
   invalid: [
     // 1. Webhook with no verification at all
@@ -209,6 +291,85 @@ ruleTester.run('require-webhook-signature', requireWebhookSignature, {
       code: `
         app.post('/webhooks/payments', (req, res) => {
           processPayment(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // --- FN-GUARDS for the expanded gated-generic handling (ship #2) ---
+    // 8. Generic schema.validate() (Joi/zod input validation) must NOT count as
+    //    webhook signature verification — EVEN when a webhook lib is imported in the
+    //    same file. This is the anti-`jwt.verify` discipline extended to `.validate()`.
+    {
+      code: `
+        import { validateWebhook } from 'svix';
+        app.post('/webhook', (req, res) => {
+          const { error } = schema.validate(req.body);
+          if (error) return res.sendStatus(400);
+          processEvent(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // 9. Generic .verifySignature() on a NON-webhook receiver must NOT count.
+    {
+      code: `
+        app.post('/webhook', (req, res) => {
+          const ok = jwtHelper.verifySignature(token);
+          if (!ok) return res.sendStatus(401);
+          processEvent(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // 10. Bare verify() Identifier call (e.g. jsonwebtoken's exported verify) must NOT
+    //     count — closes the latent unguarded-bare-`verify` gap.
+    {
+      code: `
+        import { verify } from 'jsonwebtoken';
+        app.post('/webhook', (req, res) => {
+          const decoded = verify(req.headers.authorization, SECRET);
+          processEvent(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // 11. FN-guard (security-auditor F1): `validateRequest` is NOT distinctive
+    //     (express-validator / generic body validation). A bare or arbitrary-receiver
+    //     `validateRequest()` must NOT be accepted as signature verification.
+    {
+      code: `
+        app.post('/webhook', (req, res) => {
+          validateRequest(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // 12. FN-guard (security-auditor F2): a forged local object literal named
+    //     `webhooks` with a no-op `.validate()` must NOT match (no provenance).
+    {
+      code: `
+        const webhooks = { validate: (x) => true };
+        app.post('/webhook', (req, res) => {
+          webhooks.validate(req.body);
+          res.sendStatus(200);
+        });
+      `,
+      errors: [{ messageId: 'missingWebhookSig' }],
+    },
+    // 13. FN-guard (security-auditor F4): a Joi schema named `webhooks` doing input
+    //     validation, even with a webhook lib imported for an unrelated route, must
+    //     NOT be accepted — `validate` is excluded from the name-based fallback.
+    {
+      code: `
+        import { Webhook } from 'svix';
+        const webhooks = Joi.object({ type: Joi.string() });
+        app.post('/webhook', (req, res) => {
+          webhooks.validate(req.body);
           res.sendStatus(200);
         });
       `,
