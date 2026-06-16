@@ -6,6 +6,10 @@ This project follows [Semantic Versioning](https://semver.org/). The `@undercurr
 
 ## [Unreleased]
 
+### Changed
+
+- **Widen `peerDependencies.eslint` to `^9.0.0 || ^10.0.0`** to support ESLint 10 (released Feb 2026; flat-config-only, Node `^20.19.0 || ^22.13.0 || >=24`). Previously a consumer on `eslint@10` hit an `ERESOLVE` peer conflict on first install. The plugin loads and rules fire unchanged under ESLint 10 — `@typescript-eslint/parser`/`utils`/`rule-tester` at `^8` have permitted ESLint 10 since 8.56.0. Verified via an isolated `npm pack` + flat-config smoke (consumer `ERESOLVE` reproduced under the old `^9.0.0`, then confirmed resolved + plugin-loads + rule-fires + CLI-loads under an `eslint@10` runtime). A dedicated `eslint10` CI job installs `eslint@10` on Node 24 and runs typecheck + build + test; the existing Node 20/22/24 matrix stays on ESLint 9. `engines.node` is unchanged (`>=20.0.0`) — note ESLint 10 itself requires Node `^20.19.0 || ^22.13.0 || >=24`.
+
 ### CI / release
 
 - **`publish.yml` dist-tag is now derived from the version** instead of hardcoded `--tag next`. A prerelease version (semver with a `-`, e.g. `2.0.0-beta.5`) publishes to `next`; a stable version (e.g. `2.0.0`) publishes to `latest`. Without this, a future stable release would have landed on `next` and left `latest` pinned to the last beta — so `npm install @undercurrentai/eslint-plugin-ai-guard` would have silently resolved to the old prerelease. A guard fails the publish if a GitHub Release's pre-release flag contradicts the version's semver prerelease component (a beta tagged as a full release, or a stable cut marked pre-release). Removed the now-incorrect static `publishConfig.tag: "next"` from `package.json` — the workflow's version-derived `--tag` is the single source of truth.
