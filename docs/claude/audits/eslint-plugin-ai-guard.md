@@ -16,7 +16,7 @@
   1. `ESLint 9 flat config plugin authoring best practices typescript-eslint utils RuleCreator 2026` → confirmed RuleCreator pattern is current; surfaced ESLint 10 release (Feb 2026) and the typescript-eslint #11543 type-drift bug.
 - **Key findings actionable**:
   1. typescript-eslint [#11543](https://github.com/typescript-eslint/typescript-eslint/issues/11543) — `ESLintUtils.RuleCreator`-returned rules are TS-incompatible with downstream `defineConfig()`. Runtime fine, type-only. Tracked in `tasks/todo.md` Watch.
-  2. Dual release path (`publish.yml` OIDC + `release.yml` `NPM_TOKEN`) is a real ambiguity — both will fire if a `v*` tag push and a GitHub Release event coincide. See Lock-Step Dependencies.
+  2. Dual release path — RESOLVED 2026-06-16: `release.yml` deleted; `publish.yml` (OIDC) is the sole publisher. Open follow-up: the `--tag next` hardcode must become conditional before a stable release (else `latest` never updates).
 
 ### Inputs Inspected
 
@@ -61,6 +61,7 @@
 - **Engineering standards detected**: ✗ — no `ENGINEERING_STANDARDS.md` local to repo. Inherits from parent monorepo CLAUDE.md (Reality-First, Evidence Requirements, AEGIS gates available but not auto-applied).
 
 #### Compliance Artifacts Found
+
 | Artifact | Present | Status |
 |---|---|---|
 | `ai/system-register.yaml` | ✗ | N/A — no AI runtime. |
@@ -73,6 +74,7 @@
 | `schemas/log_event.schema.json` | ✗ | N/A. |
 
 #### Addenda Applied
+
 - [x] Core Standards (always)
 - [ ] AI Governance Addendum — SUPPRESSED (zero AI/ML in package)
 - [ ] Agentic Safety Addendum — SUPPRESSED (no agents)
@@ -105,7 +107,7 @@
 |---|---|---|
 | Owner is @joshuakirby | parent monorepo CLAUDE.md `maintainer: joshuakirby`; recent commits authored by Joshua Kirby | HIGH |
 | Re-audit cadence 6 months | Auditor protocol default | HIGH |
-| Two release workflows are unintentional duplication, not by design | `publish.yml` (OIDC) and `release.yml` (token+release) both run typecheck+build+test+publish; if a `v*` tag is pushed and then a GitHub Release is created from it, both fire | MED — could be intentional belt-and-suspenders; flagged for owner decision in `tasks/todo.md` |
+| ~~Two release workflows are unintentional duplication~~ — RESOLVED 2026-06-16 | `release.yml` deleted; `publish.yml` (OIDC) is the sole publisher | — |
 | Coverage floor is "monitor only" | No `coverage.thresholds` set in `vitest.config.ts` | HIGH |
 | `tasks/` and Boris loop are net-new patterns for this repo | No prior `tasks/` directory; no related references in CONTRIBUTING.md | HIGH |
 
@@ -165,21 +167,25 @@
 ### Trigger Metrics (30-day window from 2026-04-17 → 2026-05-17)
 
 **COMMIT if:**
+
 - `npm run typecheck && npm test && npm run lint` all green (no source code touched).
 - All Hard Stops in §3 mirrored in `.claude/settings.json` deny rules.
 - All Ask-First triggers in §10 mirrored in `.claude/settings.json` ask rules.
 - Mermaid graph in this packet is renderable.
 
 **HOLD if:**
+
 - Owner objects to the dual-release-path flag (would change Ask-First scope).
 - Owner intends `compat.ts` deprecation soak to be shorter than 2 minor versions (would change L001 lesson + §3 Hard Stop scope).
 
 **ROLLBACK if:**
+
 - Ask-First fires >5×/week without preventing a real defect.
 - Settings.json deny rules block a legitimate `npm install` flow.
 - A new rule PR reveals the mirror invariant is wrong (e.g., CLI starts importing `aiGuard.configs.recommended` directly).
 
 **TIMEOUTS:**
+
 - 7 days without owner ack → CLAUDE.md still applies (it's only advisory); settings.json takes effect on next session start.
 - 30 days → review `tasks/lessons.md` for additions; tune Ask-First.
 - 6 months (2026-10-17) → date-stamped rules expire; re-audit per §12.
@@ -220,6 +226,7 @@
 ### Calculated Legal Edge
 
 **Constraints Detected:**
+
 - License: MIT (LICENSE file). Compatible with: MIT, ISC, BSD-2/3, Apache-2.0. Incompatible: GPL-family, AGPL.
 - Privacy: NONE — no user data processing.
 - Regulatory: NONE for the package itself. Downstream operators may have CRA / AI Act exposure depending on what they build with it; that's their concern.
@@ -228,6 +235,7 @@
 **If Blocked**: N/A — no legal path-blocking constraints in current scope.
 
 **Constraint Log**:
+
 ```
 2026-04-17: Confirmed MIT-only dependency tree. No copyleft transitive deps detected in package.json.
 2026-04-17: npm publish --provenance --access public — provides SLSA L2-equivalent attestation; sufficient for downstream operators.
@@ -239,13 +247,13 @@
 |---|---|---|
 | Tests discoverable | ✓ | `vitest.config.ts` includes `tests/**/*.test.ts`. |
 | Linters configured | ✓ | `eslint.config.mjs` dogfoods plugin from `dist/`. Build-before-lint. |
-| CI workflows present | ✓ | 3: ci.yml (PR/push), publish.yml (release event + workflow_dispatch), release.yml (tag push). |
+| CI workflows present | ✓ | 3: ci.yml (PR/push), publish.yml (release event + workflow_dispatch — sole OIDC publisher), stale.yml (scheduled issue triage). |
 | CODEOWNERS defined | ✗ | Not present. Optional — single-maintainer repo. Defer. |
 | Pre-commit hooks | ✗ | Not present. `prepublishOnly` covers publish gate. Optional. |
 | `prepublishOnly` chain | ✓ | `typecheck && test && lint && build`. |
-| npm provenance | ✓ | Both release workflows use `--provenance --access public`. |
+| npm provenance | ✓ | `publish.yml` publishes with `--provenance --access public` (OIDC + Sigstore attestation). |
 | Mirror invariant CI check | ✗ | Recommended future addition: a CI step that diffs `src/configs/{recommended,strict,security}.ts` rule severities against `cli/utils/eslint-runner.ts:77-114`. Not currently automated. |
-| **Dual release path** | ⚠️ | `publish.yml` (release event + OIDC trusted publisher) AND `release.yml` (tag push + `NPM_TOKEN` + creates GitHub Release). Both run full prepublish chain and call `npm publish --provenance`. **A `v*` tag push that also creates a GitHub Release will fire BOTH workflows**, attempting to double-publish. npm will reject the second publish (version exists), but it's noisy. Decision needed: archive `release.yml` and keep OIDC, or archive `publish.yml` and keep tag-driven. Owner sign-off — flagged in `tasks/todo.md` Watch. |
+| **Single release path (OIDC)** | ✅ | `release.yml` deleted 2026-06-16; `publish.yml` (release-event + OIDC trusted publisher, tokenless + `--provenance`) is the sole publisher — proven by `v2.0.0-beta.4` (publish.yml succeeded; the racing release.yml failed `ENEEDAUTH`, prompting its removal). **Open gap**: `publish.yml` hardcodes `--tag next`, so a stable (non-prerelease) version would skip the `latest` dist-tag — make conditional before GA. |
 | ESLint 10 peer-dep | ⚠️ | Currently `^9.0.0` only. ESLint 10 (Feb 2026) is flat-config-only, Node `^20.19.0+`. Defer widening to v3.0.0 major. |
 
 #### Mirror Verification (CLAUDE.md ↔ settings.json)
@@ -275,13 +283,16 @@
 ### Adaptive Loop
 
 #### Recommended SOP Tweaks
+
 - After 30 days: review `tasks/lessons.md` for new entries; promote any L00X with R≥10 into a §3 Hard Stop or settings.json deny.
 - Add a CI step that diffs `src/configs/{recommended,strict,security}.ts` rule severities against `cli/utils/eslint-runner.ts:77-114` constants — kills the mirror-drift class entirely.
-- Decide on dual release path (archive one workflow).
-- Optional: add CycloneDX 1.6 SBOM emission to `release.yml` if downstream EU operators ask.
+- ~~Decide on dual release path (archive one workflow).~~ DONE 2026-06-16: `release.yml` deleted, `publish.yml` (OIDC) canonical.
+- Optional: add CycloneDX 1.6 SBOM emission to `publish.yml` if downstream EU operators ask.
 
 #### Memory/Learning
+
 After 30 days, capture in `tasks/lessons.md`:
+
 - Which Ask-First triggers fired (frequency + value).
 - Any settings.json deny rules that blocked legitimate work (and how often).
 - New invariants discovered (e.g., from PR review feedback).
@@ -290,6 +301,7 @@ After 30 days, capture in `tasks/lessons.md`:
 ### Peer Review
 
 #### Exposed Assumptions
+
 | Assumption | How to Validate | Owner |
 |---|---|---|
 | Mirror invariant is the real invariant (not just a convention that could be replaced by importing `aiGuard.configs` directly) | Read `cli/utils/eslint-runner.ts:71-76` comment + check git history for any prior attempt to import configs | @joshuakirby |
@@ -297,6 +309,7 @@ After 30 days, capture in `tasks/lessons.md`:
 | 2-minor-version deprecation soak is the right number | Check CHANGELOG for prior deprecation timelines | @joshuakirby |
 
 #### Hostile Tests
+
 1. **Add a named export to `src/index.ts` without updating `tsup.config.ts` interop footer**: Expected — settings.json `ask` fires; CLAUDE.md §3 Hard Stop documented; if owner approves, tests verify CJS `require()` still returns plugin directly (no `.default` reach). If they don't, REFUSE.
 2. **Edit `cli/utils/eslint-runner.ts` `STRICT_RULES` to add a rule without editing `src/configs/strict.ts`**: Expected — settings.json `ask` fires; reviewer rejects in PR; lesson L003 cited.
 3. **Run `npm publish` locally**: Expected — settings.json `Bash(npm publish*)` deny fires.

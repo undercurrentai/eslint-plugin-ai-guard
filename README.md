@@ -13,8 +13,6 @@
   </p>
 </p>
 
-> ⚠️ **Pre-release** — `v2.0.0-beta.3` is queued for the first-ever npm publish. The npm version / downloads shields above will render as unknown until publish lands. The CI workflow (`CI` — typecheck + build + test on Node 20/22/24, plus lint + docs:build on Node 20) fires on every push and PR. To use the plugin pre-publish, clone the repo and `npm link`. This banner will be removed from README once `@undercurrentai/eslint-plugin-ai-guard@2.0.0-beta.3` is live on npm.
-
 ---
 
 > **Lineage.** Forked from [YashJadhav21/eslint-plugin-ai-guard](https://github.com/YashJadhav21/eslint-plugin-ai-guard) (MIT) at v1.1.11. The `@undercurrent` fork extends that surface with the framework-aware trio (auth / authz / webhook signature) and a companion CLI, while contributing framework-agnostic correctness fixes back upstream under our dual-track policy. See [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
