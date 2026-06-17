@@ -99,6 +99,7 @@ export const STRICT_RULES: Record<string, RuleLevel> = {
   'ai-guard/require-framework-auth': 'error',
   'ai-guard/require-framework-authz': 'error',
   'ai-guard/require-webhook-signature': 'error',
+  'ai-guard/require-server-action-auth': 'error',
   'ai-guard/no-console-in-handler': 'error',
   'ai-guard/no-duplicate-logic-block': 'error',
 };
@@ -111,6 +112,7 @@ export const SECURITY_RULES: Record<string, RuleLevel> = {
   'ai-guard/require-framework-auth': 'warn',
   'ai-guard/require-framework-authz': 'warn',
   'ai-guard/require-webhook-signature': 'warn',
+  'ai-guard/require-server-action-auth': 'warn',
 };
 
 function getRules(
