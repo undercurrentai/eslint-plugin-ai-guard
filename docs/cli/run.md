@@ -15,7 +15,7 @@ ai-guard run [options]
 | Option | Default | Description |
 |---|---|---|
 | `--path <target>` | `.` (current directory) | Directory or file to scan |
-| `--strict` | off | Use the strict preset — all 13 active rules at `error` |
+| `--strict` | off | Use the strict preset — all 14 active rules at `error` |
 | `--security` | off | Use the security-only preset |
 | `--json` | off | Output results as machine-readable JSON |
 | `--max-warnings <n>` | none | Exit with code 1 if warnings exceed `n` |
@@ -54,7 +54,7 @@ ai-guard run --path src --strict --json
 
 ## Output Format
 
-### When issues are found:
+### When issues are found
 
 ```
   AI GUARD RESULTS
@@ -84,7 +84,7 @@ ai-guard run --path src --strict --json
     45:1   warn  Async callback in .map()...     no-async-array-callback
 ```
 
-### When no issues are found:
+### When no issues are found
 
 ```
   ✔ No AI issues found — your code looks clean
@@ -140,5 +140,5 @@ When using `--json`, output is written to stdout:
 | Flag | Rules enabled | Severity |
 |---|---|---|
 | (none) | recommended (12 rules) | balanced |
-| `--strict` | all 13 active rules | all `error` |
+| `--strict` | all 14 active rules | all `error` |
 | `--security` | 7 security rules (incl. framework-aware trio) | `error`/`warn` |

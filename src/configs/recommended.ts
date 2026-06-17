@@ -31,6 +31,10 @@ const recommended: TSESLint.ClassicConfig.Config = {
     'ai-guard/no-catch-log-rethrow': 'off',
     'ai-guard/require-framework-authz': 'warn',
     'ai-guard/require-webhook-signature': 'warn',
+    // New + HIGH-FP-risk (Server Actions legitimately delegate auth to middleware/DAL/
+    // wrappers): off by default so it never adds noise to the adoption baseline. Opt in
+    // via the `strict`/`security`/`framework` presets or enable explicitly.
+    'ai-guard/require-server-action-auth': 'off',
     'ai-guard/no-duplicate-logic-block': 'off',
   },
 };

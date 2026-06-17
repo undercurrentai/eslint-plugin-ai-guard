@@ -1,6 +1,6 @@
 # Rules
 
-`@undercurrentai/eslint-plugin-ai-guard` currently ships **20 rules** across five categories (13 active + 7 deprecated).
+`@undercurrentai/eslint-plugin-ai-guard` currently ships **21 rules** across five categories (14 active + 7 deprecated).
 
 - Error handling
 - Async correctness
@@ -25,7 +25,8 @@ Three new rules replace generic name-based detection with framework-deep analysi
 
 - [`require-framework-auth`](./rules/require-framework-auth.md) — missing authentication on routes
 - [`require-framework-authz`](./rules/require-framework-authz.md) — missing authorization/ownership (CASL, Casbin, Cerbos, Permit.io aware)
-- [`require-webhook-signature`](./rules/require-webhook-signature.md) — webhook handlers without signature verification (Stripe, GitHub, Svix, Slack)
+- [`require-webhook-signature`](./rules/require-webhook-signature.md) — webhook handlers without signature verification (Stripe, GitHub, Svix, Slack, Discord, Clerk, Square, SendGrid, …)
+- [`require-server-action-auth`](./rules/require-server-action-auth.md) — Next.js Server Actions (`'use server'`) without an auth/session check (off in `recommended`, opt-in)
 
 ## Deprecated (will be removed in v3.0.0)
 

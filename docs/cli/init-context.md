@@ -1,6 +1,6 @@
 # ai-guard init-context
 
-The `init-context` command generates instruction files for popular AI coding agents (Claude Code, Cursor, GitHub Copilot). These instruction files guide the tools to proactively avoid the AI-generated code anti-patterns that the active v2 `ai-guard` rules flag — 13 active rules covering error handling, async correctness, security, and code quality.
+The `init-context` command generates instruction files for popular AI coding agents (Claude Code, Cursor, GitHub Copilot). These instruction files guide the tools to proactively avoid the AI-generated code anti-patterns that the active v2 `ai-guard` rules flag — 14 active rules covering error handling, async correctness, security, and code quality.
 
 This prevents the anti-patterns from being generated in the first place, saving you time.
 
@@ -23,7 +23,7 @@ instructions
 ◯ All three (recommended)
 ```
 
-Select the agents you use. 
+Select the agents you use.
 
 ### Generating for all targets
 
@@ -61,16 +61,19 @@ Each generated file contains code examples in the specific format preferred by i
 ## Examples
 
 **Preview the output without writing files:**
+
 ```bash
 npx ai-guard init-context --all --dry-run
 ```
 
 **Force upgrade existing instruction files:**
+
 ```bash
 npx ai-guard init-context --all --force
 ```
 
 **Only generate security-related instructions for Cursor:**
+
 ```bash
 npx ai-guard init-context --rules security
 ```

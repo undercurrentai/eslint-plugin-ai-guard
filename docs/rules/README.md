@@ -1,6 +1,6 @@
 # Rules Reference
 
-All 20 rules provided by `@undercurrentai/eslint-plugin-ai-guard`, organized by category.
+All 21 rules provided by `@undercurrentai/eslint-plugin-ai-guard`, organized by category.
 Rules marked **deprecated** continue to emit findings (with `[ai-guard deprecated]` prefix)
 and will be removed in v3.0. Use the listed replacement instead.
 
@@ -37,6 +37,7 @@ and will be removed in v3.0. Use the listed replacement instead.
 | [require-framework-auth](require-framework-auth.md) | `warn` | `warn` | `error` | Missing auth on Express/Fastify/Hono/NestJS/Next.js routes |
 | [require-framework-authz](require-framework-authz.md) | `warn` | `warn` | `error` | No ownership/policy check (CASL/Casbin/Cerbos/Permit.io aware) |
 | [require-webhook-signature](require-webhook-signature.md) | `warn` | `warn` | `error` | Webhook handler without HMAC signature verification |
+| [require-server-action-auth](require-server-action-auth.md) | `off` | `warn` | `error` | Next.js Server Action (`'use server'`) without an auth/session check |
 | [require-auth-middleware](require-auth-middleware.md) **deprecated** | `off` (compat) | — | — | → use `require-framework-auth` |
 | [require-authz-check](require-authz-check.md) **deprecated** | `off` (compat) | — | — | → use `require-framework-authz` |
 

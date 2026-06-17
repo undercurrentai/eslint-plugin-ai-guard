@@ -16,6 +16,7 @@ import { requireAuthzCheck } from './security/require-authz-check';
 import { requireFrameworkAuth } from './security/require-framework-auth';
 import { requireFrameworkAuthz } from './security/require-framework-authz';
 import { requireWebhookSignature } from './security/require-webhook-signature';
+import { requireServerActionAuth } from './security/require-server-action-auth';
 import { noConsoleInHandler } from './quality/no-console-in-handler';
 import { noDuplicateLogicBlock } from './logic/no-duplicate-logic-block';
 
@@ -42,6 +43,7 @@ export const allRules = {
   'require-framework-auth': requireFrameworkAuth,
   'require-framework-authz': requireFrameworkAuthz,
   'require-webhook-signature': requireWebhookSignature,
+  'require-server-action-auth': requireServerActionAuth,
   'no-console-in-handler': noConsoleInHandler,
   'no-duplicate-logic-block': noDuplicateLogicBlock,
 } as const;

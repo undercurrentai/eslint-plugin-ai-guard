@@ -12,6 +12,7 @@ const security: TSESLint.ClassicConfig.Config = {
     'ai-guard/require-framework-auth': 'warn',
     'ai-guard/require-framework-authz': 'warn',
     'ai-guard/require-webhook-signature': 'warn',
+    'ai-guard/require-server-action-auth': 'warn',
   },
 };
 

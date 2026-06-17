@@ -226,7 +226,7 @@ These patterns pass TypeScript and existing linters. `ai-guard` catches them.
 
 **What they do *not* cover yet** (tracked on the roadmap — these are silent gaps, not detections):
 
-- **Next.js Server Actions (`'use server'`) and `middleware.ts` auth** — only `route.ts` handlers are analyzed.
+- **Next.js `middleware.ts` auth** — the framework-aware route rules analyze `route.ts` handlers in isolation, not a global `middleware.ts` gate. (Next.js **Server Actions** (`'use server'`) *are* now covered — by [`require-server-action-auth`](docs/rules/require-server-action-auth.md), `off` in `recommended`, opt-in via `strict`/`security`/`framework`.)
 - **GraphQL resolvers, tRPC procedures, and Hono RPC** — detection is REST-shaped; resolver/procedure auth is not yet modeled.
 - **Webhook providers beyond Stripe / GitHub / Svix / Slack** — other providers (SendGrid, Twilio, Shopify, etc.) aren't pattern-matched yet, so `require-webhook-signature` won't flag them.
 

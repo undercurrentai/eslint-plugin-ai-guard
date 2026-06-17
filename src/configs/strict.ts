@@ -24,6 +24,7 @@ const strict: TSESLint.ClassicConfig.Config = {
     'ai-guard/require-framework-auth': 'error',
     'ai-guard/require-framework-authz': 'error',
     'ai-guard/require-webhook-signature': 'error',
+    'ai-guard/require-server-action-auth': 'error',
     // Quality - all at error
     'ai-guard/no-console-in-handler': 'error',
     'ai-guard/no-duplicate-logic-block': 'error',
